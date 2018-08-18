@@ -23,7 +23,6 @@ exports.showBalances = async (chatId, bot) => {
   }
 };
 
-
 exports.showBalance = async (chatId, bot, address) => {
   console.log('===========================================================');
   const client = new Client();
