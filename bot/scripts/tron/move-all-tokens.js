@@ -2,7 +2,7 @@ const chalk = require('chalk');
 const nconf = require('nconf');
 const { getAllAccountInstances } = require('./helpers');
 
-const { tokenTarget, trxTarget } = nconf.get('tron');
+const { trxTarget } = nconf.get('tron');
 
 exports.transfer = async (chatId, bot, sendAddress, amount) => {
   const accounts = getAllAccountInstances();
@@ -17,17 +17,16 @@ exports.transfer = async (chatId, bot, sendAddress, amount) => {
       let bal = parseInt(amount, 10) || Math.floor(balance);
       if (bal > 0) {
         console.log(name === 'TRX' ? chalk.green(address, name, bal) : chalk.white(address, name, bal));
-        let target = tokenTarget;
-        if (name === 'TRX' || name === 'IGG' || name === 'Tarquin' || name === 'DEX') {
+        let target = trxTarget;
+        if (name === 'TRX' || name === 'IGG' || name === 'Tarquin') {
           if (name === 'TRX') {
             totalTrx += parseInt(bal, 10);
             bal = parseInt(bal * 1000000, 10);
-            target = trxTarget;
           }
           target = sendAddress || target;
 
           if (address !== target) {
-            const msg = `sending token from: ${address}, to: ${target}, bal: ${name === 'TRX' ? bal / 1000000 : bal}`;
+            const msg = `sending ${name}\nfrom: ${address}\nto: ${target}\nbal: ${name === 'TRX' ? bal / 1000000 : bal}`;
             console.log(msg);
             bot.sendMessage(chatId, msg);
             const tranaction = client.send(name, address, target, bal);
