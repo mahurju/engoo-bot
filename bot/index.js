@@ -25,8 +25,8 @@ const { showBalance, showBalances, transfer } = require('./scripts/tron');
   bot.onText(/\/start/, (msg) => {
     bot.sendMessage(msg.chat.id, 'Welcome to engoo. Please click what you want to do.', {
       reply_markup: {
-        keyboard: [['start', 'stop', 'schedule']],
-        // keyboard: [['start', 'stop', 'schedule'], ['showBalances', 'transfer']],
+        // keyboard: [['start', 'stop', 'schedule']],
+        keyboard: [['start', 'stop', 'schedule'], ['showBalances', 'transfer']],
       },
     });
   });
