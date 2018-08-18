@@ -1,0 +1,9 @@
+engoo:
+  api: https://engoo.co.kr/teachers/
+  teachers:
+    - 25420
+    - 25817
+    - 25215
+
+telegram:
+  myChatId: 237293953
