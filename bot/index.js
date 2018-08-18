@@ -2,7 +2,7 @@ require('../config')();
 const TelegramBot = require('node-telegram-bot-api');
 const nconf = require('nconf');
 const { start, stop, show, setBot } = require('./scripts/engoo');
-// const { showBalances, transfer, showBalance } = require('./scripts/tron');
+const { showBalance } = require('./scripts/tron');
 
 (async () => {
   const { token, myChatId } = nconf.get('telegram');
