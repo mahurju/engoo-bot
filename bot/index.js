@@ -2,7 +2,7 @@ require('../config')();
 const TelegramBot = require('node-telegram-bot-api');
 const nconf = require('nconf');
 const { start, stop, show, setBot } = require('./scripts/engoo');
-const { showBalance } = require('./scripts/tron');
+const { showBalance, showBalances, transfer } = require('./scripts/tron');
 
 (async () => {
   const { token, myChatId } = nconf.get('telegram');
@@ -49,25 +49,24 @@ const { showBalance } = require('./scripts/tron');
       await show(resChatId);
     }
 
-    // if (command === 'showBalances') {
-    //   if (myChatId === resChatId) {
-    //     await showBalances(resChatId, bot);
-    //   } else {
-    //     bot.sendMessage(msg.chat.id, '권한이 없는 사용자입니다.');
-    //   }
-    // }
+    if (command === 'showBalances') {
+      if (myChatId === resChatId) {
+        await showBalances(resChatId, bot);
+      } else {
+        bot.sendMessage(msg.chat.id, '권한이 없는 사용자입니다.');
+      }
+    }
 
-    // if (command === 'transfer') {
-    //   const [, address, amount] = text.split(' ');
-    //   console.log(address, amount);
-    //   if (myChatId === resChatId) {
-    //     await transfer(resChatId, bot, address, amount);
-    //   } else {
-    //     bot.sendMessage(msg.chat.id, '권한이 없는 사용자입니다.');
-    //   }
-    // }
+    if (command === 'transfer') {
+      const [, address, amount] = text.split(' ');
+      console.log(address, amount);
+      if (myChatId === resChatId) {
+        await transfer(resChatId, bot, address, amount);
+      } else {
+        bot.sendMessage(msg.chat.id, '권한이 없는 사용자입니다.');
+      }
+    }
   });
-
 
   setBot(bot);
 })();
