@@ -8,6 +8,10 @@ module.exports = () => {
     file: `${__dirname}/local.yml`,
     format: require('nconf-yaml'),
   });
+  
+  if (process.env.TOKEN) {
+    nconf.set('telegram:token', process.env.TOKEN);
+  }
 
   nconf.file('common', {
     file: `${__dirname}/default.yml`,
