@@ -7,5 +7,7 @@ engoo:
 
 telegram:
   myChatId: 237293953
+  
+tron:
   tokenTarget: TUW61yV5ptBeoRLSdf8bQUt6wREAaWKtQN
   trxTarget: TQLLiWzKg2Cu5hjywRSfPJYGhbPAkPNRUK
