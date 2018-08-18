@@ -18,7 +18,7 @@ exports.transfer = async (chatId, bot, sendAddress, amount) => {
       if (bal > 0) {
         console.log(name === 'TRX' ? chalk.green(address, name, bal) : chalk.white(address, name, bal));
         let target = trxTarget;
-        if (name === 'TRX' || name === 'IGG' || name === 'Tarquin') {
+        if (name === 'TRX' || name === 'IGG' || name === 'Tarquin' || name === 'SEED') {
           if (name === 'TRX') {
             totalTrx += parseInt(bal, 10);
             bal = parseInt(bal * 1000000, 10);
