@@ -13,6 +13,10 @@ module.exports = () => {
     nconf.set('telegram:token', process.env.TOKEN);
   }
 
+  if (process.env.CRYPTO_PASSWORD) {
+    nconf.set('telegram:password', process.env.TOKEN);
+  }
+
   nconf.file('common', {
     file: `${__dirname}/default.yml`,
     format: require('nconf-yaml'),

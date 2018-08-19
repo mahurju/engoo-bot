@@ -3,8 +3,8 @@ const { Client } = require('@tronscan/client');
 const { getAllAccountInstances } = require('./helpers');
 const { numberformat } = require('../utils');
 
-exports.showBalances = async (chatId, bot) => {
-  const accounts = getAllAccountInstances();
+exports.showBalances = async (chatId, bot, password) => {
+  const accounts = getAllAccountInstances(password);
   for (const account of accounts) {
     console.log('===========================================================');
     const { address, client } = account;

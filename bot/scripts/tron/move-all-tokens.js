@@ -4,8 +4,8 @@ const { getAllAccountInstances } = require('./helpers');
 
 const { trxTarget } = nconf.get('tron');
 
-exports.transfer = async (chatId, bot, sendAddress, amount) => {
-  const accounts = getAllAccountInstances();
+exports.transfer = async (chatId, bot, password, amount, sendAddress) => {
+  const accounts = getAllAccountInstances(password);
   let totalTrx = 0;
   for (const account of accounts) {
     console.log('===========================================================');

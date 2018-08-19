@@ -51,21 +51,39 @@ const { showBalance, showBalances, transfer } = require('./scripts/tron');
 
     if (command === 'showBalances') {
       if (myChatId === resChatId) {
-        await showBalances(resChatId, bot);
+        const [, password] = text.split(' ');
+        try {
+          await showBalances(resChatId, bot, password);
+        } catch (err) {
+          bot.sendMessage(msg.chat.id, `에러발생: ${JSON.stringify(err)}`);
+        }
       } else {
         bot.sendMessage(msg.chat.id, '권한이 없는 사용자입니다.');
       }
     }
 
     if (command === 'transfer') {
-      const [, address, amount] = text.split(' ');
-      console.log(address, amount);
+      const [, password, amount, address] = text.split(' ');
       if (myChatId === resChatId) {
-        await transfer(resChatId, bot, address, amount);
+        try {
+          await transfer(resChatId, bot, password, amount === 'null' ? null : amount, address === 'null' ? null : address);
+        } catch (err) {
+          bot.sendMessage(msg.chat.id, `에러발생: ${JSON.stringify(err)}`);
+        }
       } else {
         bot.sendMessage(msg.chat.id, '권한이 없는 사용자입니다.');
       }
     }
+
+    // if (command === 'tip') {
+    //   const [, address, amount] = text.split(' ');
+    //   console.log(address, amount);
+    //   if (myChatId === resChatId) {
+    //     await transfer(resChatId, bot, address, amount);
+    //   } else {
+    //     bot.sendMessage(msg.chat.id, '권한이 없는 사용자입니다.');
+    //   }
+    // }
   });
 
   setBot(bot);
