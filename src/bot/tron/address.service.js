@@ -28,7 +28,6 @@ const showBalance = async (reply, chatId) => {
   }
 };
 
-
 exports.addAddress = async (chatId, addr, reply) => {
   const data = await users.child(`/${chatId}/address`).once('value');
   console.log(data.val());

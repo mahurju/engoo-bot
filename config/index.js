@@ -19,7 +19,7 @@ module.exports = () => {
   }
 
   if (process.env.CRYPTO_PASSWORD) {
-    nconf.set('telegram:password', process.env.TOKEN);
+    nconf.set('telegram:password', process.env.CRYPTO_PASSWORD);
   }
 
   if (process.env.FIREBASE_CERT) {
