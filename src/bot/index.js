@@ -49,11 +49,7 @@ const run = async () => {
     },
   }));
 
-  bot.command('address', async ({ reply, message: { text } }) => {
-    const [, address] = (text || '').split(' ');
-    if (!address) reply('주소를 입력하세요.');
-    await showBalance(reply, address);
-  });
+  bot.command('address', ({ reply }) => reply('/address 조회할 주소를 입력하세요.', { reply_markup: { force_reply: true, selective: true } }));
 
   bot.command('startListen', async ({ from: { id: resChatId } }) => {
     await startListenAccount(resChatId);
@@ -145,6 +141,15 @@ const run = async () => {
           try {
             const address = message.text;
             await removeAddress(resChatId, address, reply);
+          } catch (err) {
+            reply(`에러발생: ${JSON.stringify(err)}`);
+          }
+        }
+
+        if (text.startsWith('/address')) {
+          try {
+            const address = message.text;
+            await showBalance(reply, address);
           } catch (err) {
             reply(`에러발생: ${JSON.stringify(err)}`);
           }
