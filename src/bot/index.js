@@ -2,12 +2,12 @@ const Telegraf = require('telegraf');
 const nconf = require('nconf');
 const { encrypt } = require('./utils');
 const { start, stop, show } = require('./engoo');
-const { showBalance, showBalances, transfer, addAddress, getAddresses } = require('./tron');
+const { showBalance, showBalances, transfer, addAddress, getAddress, removeAddress, startListenAccount, stopListenAccount, initListen } = require('./tron');
+
+const { token, myChatId } = nconf.get('telegram');
+const bot = new Telegraf(token);
 
 const run = async () => {
-  const { token, myChatId } = nconf.get('telegram');
-  const bot = new Telegraf(token);
-
   const hasBotCommands = (entities) => {
     if (!entities || !(entities instanceof Array)) {
       return false;
@@ -15,6 +15,16 @@ const run = async () => {
   
     return entities.some(e => e.type === 'bot_command');
   };
+
+  const helpMsg = ['/addAddr 트론주소 추가',
+    '/getAddr 등록된 주소조회',
+    '/removeAddr 트론주소 삭제',
+    '/startListen 트론주소 잔액변동알림 시작',
+    '/stopListen 트론주소 잔액변동알림 중지',
+    '/address {주소} 계좌조회'];
+
+  bot.help(ctx => ctx.reply(helpMsg.join('\n')));
+  bot.start(ctx => ctx.reply(helpMsg.join('\n')));
 
   bot.command('start', ({ reply }) => reply('Welcome to marucoolBot. Please click what you want to do.', {
     reply_markup: {
@@ -46,6 +56,14 @@ const run = async () => {
     await showBalance(reply, address);
   });
 
+  bot.command('startListen', async ({ from: { id: resChatId } }) => {
+    await startListenAccount(resChatId);
+  });
+
+  bot.command('stopListen', async ({ reply, from: { id: resChatId } }) => {
+    await stopListenAccount(reply, resChatId);
+  });
+
   bot.command('run', async ({ reply, from: { id: resChatId } }) => {
     await start(reply, resChatId);
   });
@@ -54,11 +72,13 @@ const run = async () => {
     stop(reply, resChatId);
   });
 
-  bot.command('get', ({ reply, from: { id: resChatId } }) => {
-    getAddresses(reply, resChatId);
+  bot.command('addAddr', ({ reply }) => reply('/addAddr 추가할 주소를 입력하세요.', { reply_markup: { force_reply: true, selective: true } }));
+
+  bot.command('getAddr', ({ reply, from: { id: resChatId } }) => {
+    getAddress(reply, resChatId);
   });
 
-  bot.command('add', ({ reply }) => reply('/add 추가할 주소를 입력하세요.', { reply_markup: { force_reply: true, selective: true } }));
+  bot.command('removeAddr', ({ reply }) => reply('/removeAddr 삭제할 주소를 입력하세요.', { reply_markup: { force_reply: true, selective: true } }));
 
   bot.command('schedule', async ({ reply }) => {
     await show(reply);
@@ -113,10 +133,19 @@ const run = async () => {
           }
         }
 
-        if (text.startsWith('/add')) {
+        if (text.startsWith('/addAddr')) {
           try {
             const address = message.text;
             await addAddress(resChatId, address, reply);
+          } catch (err) {
+            reply(`에러발생: ${JSON.stringify(err)}`);
+          }
+        }
+
+        if (text.startsWith('/removeAddr')) {
+          try {
+            const address = message.text;
+            await removeAddress(resChatId, address, reply);
           } catch (err) {
             reply(`에러발생: ${JSON.stringify(err)}`);
           }
@@ -129,6 +158,7 @@ const run = async () => {
     console.log('Ooops', err);
   });
   bot.startPolling();
+  await initListen(bot);
 
   // const usersRef = tronRef.child('users');
   // usersRef.set({
