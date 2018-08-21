@@ -3,13 +3,9 @@ const axios = require('axios');
 const moment = require('moment');
 const schedule = require('node-schedule');
 
-// const { myChatId } = nconf.get('telegram');
-let bot = null;
 const jobs = {};
 
-const getSchedules = async (chatId) => {
-  console.log(chatId);
-
+const getSchedules = async () => {
   const { api, teachers } = nconf.get('engoo');
   const allSchedules = {};
   for (const teacherNum of teachers) {
@@ -36,50 +32,50 @@ const getSchedules = async (chatId) => {
   return allSchedules;
 };
 
-const sendResult = async (schedules, chatId) => {
+const sendResult = async (reply, schedules) => {
   if (Object.keys(schedules).length > 0) {
-    bot.sendMessage(chatId, JSON.stringify(schedules, null, 2));
+    reply(JSON.stringify(schedules, null, 2));
   } else {
-    bot.sendMessage(chatId, 'There is no available schedules.');
+    reply('There is no available schedules.');
   }
 };
 
-const run = async (chatId) => {
-  const schedules = await getSchedules(chatId);
-  sendResult(schedules, chatId);
+const run = async (reply) => {
+  const schedules = await getSchedules();
+  sendResult(reply, schedules);
 };
 
 exports.show = run;
 
-exports.start = async (chatId) => {
+exports.start = async (reply, chatId) => {
   if (jobs[chatId]) {
     const { job } = jobs[chatId];
     if (job && job.nextInvocation()) {
-      return bot.sendMessage(chatId, 'engoo job is running now.');  
+      return reply('engoo job is running now.');  
     }
   }
 
   jobs[chatId] = {
     job: schedule.scheduleJob('*/1 * * * *', async () => {
-      await run(chatId);
+      await run(reply);
     }),
   };
-  return bot.sendMessage(chatId, 'engoo job started.');
+  return reply('engoo job started.');
 };
 
-exports.stop = (chatId) => {
+exports.stop = (reply, chatId) => {
   const { job = {} } = jobs[chatId];
 
   console.log(job && job.nextInvocation());
 
   if (!job.nextInvocation()) {
-    return bot.sendMessage(chatId, 'engoo job is not running.');
+    return reply('engoo job is not running.');
   }
 
   job.cancel();
-  return bot.sendMessage(chatId, 'engoo job stopped.');
+  return reply('engoo job stopped.');
 };
 
-exports.setBot = (telegramBot) => {
-  bot = telegramBot;
-};
+// exports.setBot = (telegramBot) => {
+//   bot = telegramBot;
+// };
