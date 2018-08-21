@@ -154,7 +154,6 @@ const run = async () => {
             reply(`에러발생: ${JSON.stringify(err)}`);
           }
         }
-<<<<<<< HEAD
 
         if (text.startsWith('/address')) {
           try {
@@ -164,8 +163,6 @@ const run = async () => {
             reply(`에러발생: ${JSON.stringify(err)}`);
           }
         }
-=======
->>>>>>> 492aae548968d306cee724ee98b79dce1f6a53b1
       }
     }
   });
