@@ -20,7 +20,8 @@ const run = async () => {
     '/getAddr 등록된 주소조회',
     '/removeAddr 트론주소 삭제',
     '/startListen 트론주소 잔액변동알림 시작',
-    '/stopListen 트론주소 잔액변동알림 중지'];
+    '/stopListen 트론주소 잔액변동알림 중지',
+    '/address 잔액조회'];
 
   bot.help(ctx => ctx.reply(helpMsg.join('\n')));
   bot.start(ctx => ctx.reply(helpMsg.join('\n')));
@@ -50,6 +51,14 @@ const run = async () => {
   }));
 
   bot.command('address', ({ reply }) => reply('/address 조회할 주소를 입력하세요.', { reply_markup: { force_reply: true, selective: true } }));
+
+  bot.command('startListen', async ({ from: { id: resChatId } }) => {
+    await startListenAccount(resChatId);
+  });
+
+  bot.command('stopListen', async ({ reply, from: { id: resChatId } }) => {
+    await stopListenAccount(reply, resChatId);
+  });
 
   bot.command('startListen', async ({ from: { id: resChatId } }) => {
     await startListenAccount(resChatId);
@@ -145,6 +154,7 @@ const run = async () => {
             reply(`에러발생: ${JSON.stringify(err)}`);
           }
         }
+<<<<<<< HEAD
 
         if (text.startsWith('/address')) {
           try {
@@ -154,6 +164,8 @@ const run = async () => {
             reply(`에러발생: ${JSON.stringify(err)}`);
           }
         }
+=======
+>>>>>>> 492aae548968d306cee724ee98b79dce1f6a53b1
       }
     }
   });

@@ -8,6 +8,7 @@ dependencies:
   express: 4.16.3
   firebase-admin: 6.0.0
   js-yaml: 3.12.0
+  json-stable-stringify: 1.0.1
   jsonfile: 4.0.0
   moment: 2.22.2
   nconf: 0.10.0
@@ -2995,6 +2996,12 @@ packages:
     dev: false
     resolution:
       integrity: sha1-nbe1lJatPzz+8wp1FC0tkwrXJlE=
+  /json-stable-stringify/1.0.1:
+    dependencies:
+      jsonify: 0.0.0
+    dev: false
+    resolution:
+      integrity: sha1-mnWdOcXy/1A/1TAGRu1EX4jE+a8=
   /json-stringify-safe/5.0.1:
     dev: false
     optional: true
@@ -3006,6 +3013,10 @@ packages:
       graceful-fs: 4.1.11
     resolution:
       integrity: sha1-h3Gq4HmbZAdrdmQPygWPnBDjPss=
+  /jsonify/0.0.0:
+    dev: false
+    resolution:
+      integrity: sha1-LHS27kHZPKUbe1qu6PUDYx0lKnM=
   /jsonwebtoken/8.1.0:
     dependencies:
       jws: 3.1.5
@@ -5019,6 +5030,7 @@ specifiers:
   express: ^4.16.3
   firebase-admin: ^6.0.0
   js-yaml: ^3.12.0
+  json-stable-stringify: ^1.0.1
   jsonfile: ^4.0.0
   moment: ^2.22.2
   nconf: ^0.10.0
