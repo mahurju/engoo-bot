@@ -2,7 +2,7 @@ const Telegraf = require('telegraf');
 const nconf = require('nconf');
 const { encrypt } = require('./utils');
 const { start, stop, show } = require('./engoo');
-const { showBalance, showBalances, transfer, addAddress, getAddresses } = require('./tron');
+const { showBalance, showBalances, transfer, addAddress, getAddresses, startListenAccount, stopListenAccount } = require('./tron');
 
 const run = async () => {
   const { token, myChatId } = nconf.get('telegram');
@@ -44,6 +44,14 @@ const run = async () => {
     const [, address] = (text || '').split(' ');
     if (!address) reply('주소를 입력하세요.');
     await showBalance(reply, address);
+  });
+
+  bot.command('startListen', async ({ reply, from: { id: resChatId } }) => {
+    await startListenAccount(reply, resChatId);
+  });
+
+  bot.command('stopListen', async ({ reply, from: { id: resChatId } }) => {
+    await stopListenAccount(reply, resChatId);
   });
 
   bot.command('run', async ({ reply, from: { id: resChatId } }) => {
