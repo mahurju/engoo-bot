@@ -1,10 +1,8 @@
-const path = require('path');
-const yaml = require('js-yaml');
-const fs = require('fs');
 const { Client } = require('@tronscan/client');
+const { decrypt } = require('../utils');
 
-exports.getAllAccountInstances = () => {
-  const { accounts } = yaml.safeLoad(fs.readFileSync(path.join(__dirname, '..', '..', '..', '.data', 'private-keys.yml'), 'utf8'));
+exports.getAllAccountInstances = (password) => {
+  const accounts = decrypt(password);
   const accountInstances = Object.entries(accounts).reduce((prev, [address, pk]) => {
     const client = new Client();
     const signer = client.getSigner(pk);

@@ -4,9 +4,9 @@ const { getAllAccountInstances } = require('./helpers');
 
 const { trxTarget } = nconf.get('tron');
 
-exports.transfer = async (chatId, bot, sendAddress, amount) => {
-  const accounts = getAllAccountInstances();
-  let totalTrx = 0;
+exports.transfer = async (chatId, reply, password, amount, sendAddress) => {
+  const accounts = getAllAccountInstances(password);
+  const totalCnt = {};
   for (const account of accounts) {
     console.log('===========================================================');
     const { address, client } = account;
@@ -14,21 +14,23 @@ exports.transfer = async (chatId, bot, sendAddress, amount) => {
     const balances = accountInfo.balances || [];
     for (const token of balances) {
       const { name, balance } = token;
-      let bal = parseInt(amount, 10) || Math.floor(balance);
+      let bal = Math.floor(balance);
       if (bal > 0) {
+        bal = amount ? parseInt(amount, 10) : bal;
         console.log(name === 'TRX' ? chalk.green(address, name, bal) : chalk.white(address, name, bal));
         let target = trxTarget;
         if (name === 'TRX' || name === 'IGG' || name === 'Tarquin' || name === 'SEED') {
           if (name === 'TRX') {
-            totalTrx += parseInt(bal, 10);
             bal = parseInt(bal * 1000000, 10);
           }
           target = sendAddress || target;
 
           if (address !== target) {
             const msg = `sending ${name}\nfrom: ${address}\nto: ${target}\nbal: ${name === 'TRX' ? bal / 1000000 : bal}`;
+            if (!totalCnt[name]) totalCnt[name] = 0;
+            totalCnt[name] += name === 'TRX' ? bal / 1000000 : bal;
             console.log(msg);
-            bot.sendMessage(chatId, msg);
+            reply(msg);
             const tranaction = client.send(name, address, target, bal);
             const result = await tranaction();
             console.log(`result: ${JSON.stringify(result, null, 2)}`);
@@ -37,6 +39,6 @@ exports.transfer = async (chatId, bot, sendAddress, amount) => {
       }
     }
   }
-  bot.sendMessage(chatId, `Total sent TRX is ${totalTrx}`);
-  console.log(chalk.blue(`Total sent TRX is ${totalTrx}`));
+  reply(`Total sent infomation:\n ${JSON.stringify(totalCnt, null, 2)}`);
+  console.log(chalk.blue(`Total sent infomation: ${JSON.stringify(totalCnt, null, 2)}`));
 };
