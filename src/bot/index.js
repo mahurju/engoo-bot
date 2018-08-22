@@ -16,12 +16,12 @@ const run = async () => {
     return entities.some(e => e.type === 'bot_command');
   };
 
-  const helpMsg = ['/addAddr 트론주소 추가',
-    '/getAddr 등록된 주소조회',
-    '/removeAddr 트론주소 삭제',
-    '/startListen 트론주소 잔액변동알림 시작',
-    '/stopListen 트론주소 잔액변동알림 중지',
-    '/address 잔액조회'];
+  const helpMsg = ['/addAddr [Add tron address]',
+    '/getAddr [Show tron addresses]',
+    '/removeAddr [Remove tron address]',
+    '/startListen [Start tron address balance change notification]',
+    '/stopListen [Stop tron address balance change notification]',
+    '/address [Show tron address balance]'];
 
   bot.help(ctx => ctx.reply(helpMsg.join('\n')));
   bot.start(ctx => ctx.reply(helpMsg.join('\n')));
@@ -76,29 +76,29 @@ const run = async () => {
     stop(reply, resChatId);
   });
 
-  bot.command('addAddr', ({ reply }) => reply('/addAddr 추가할 주소를 입력하세요.', { reply_markup: { force_reply: true, selective: true } }));
+  bot.command('addAddr', ({ reply }) => reply('/addAddr Reply tron address to add.', { reply_markup: { force_reply: true, selective: true } }));
 
   bot.command('getAddr', ({ reply, from: { id: resChatId } }) => {
     getAddress(reply, resChatId);
   });
 
-  bot.command('removeAddr', ({ reply }) => reply('/removeAddr 삭제할 주소를 입력하세요.', { reply_markup: { force_reply: true, selective: true } }));
+  bot.command('removeAddr', ({ reply }) => reply('/removeAddr Reply tron address to remove.', { reply_markup: { force_reply: true, selective: true } }));
 
   bot.command('schedule', async ({ reply }) => {
     await show(reply);
   });
 
-  bot.command('transfer', ({ reply }) => reply('/transfer 비밀번호를 입력하세요.', { reply_markup: { force_reply: true, selective: true } }));
+  bot.command('transfer', ({ reply }) => reply('/transfer Reply password.', { reply_markup: { force_reply: true, selective: true } }));
 
-  bot.command('show', ({ reply }) => reply('/show 비밀번호를 입력하세요.', { reply_markup: { force_reply: true, selective: true } }));
+  bot.command('show', ({ reply }) => reply('/show Reply password.', { reply_markup: { force_reply: true, selective: true } }));
 
   bot.command('encrypt', async ({ reply, from: { id: resChatId }, message: { text } }) => {
     if (myChatId === resChatId) {
       const [password] = (text || '').split(' ');
       encrypt(password);
-      reply('업데이트가 완료되었습니다.');
+      reply('updated.');
     } else {
-      reply('권한이 없는 사용자입니다.');
+      reply('Unauthorized user.');
     }
   });
 
@@ -117,10 +117,10 @@ const run = async () => {
               console.log(password, amount === 'null' ? null : amount, address);
               await transfer(resChatId, reply, password, amount === 'null' ? null : amount, address === 'null' ? null : address);
             } catch (err) {
-              reply(`에러발생: ${JSON.stringify(err)}`);
+              reply(`Error Occured: ${JSON.stringify(err)}`);
             }
           } else {
-            reply('권한이 없는 사용자입니다.');
+            reply('Unauthorized user.');
           }
         }
 
@@ -130,10 +130,10 @@ const run = async () => {
               const password = message.text;
               await showBalances(reply, password);
             } catch (err) {
-              reply(`에러발생: ${JSON.stringify(err)}`);
+              reply(`Error Occured: ${JSON.stringify(err)}`);
             }
           } else {
-            reply('권한이 없는 사용자입니다.');
+            reply('Unauthorized user.');
           }
         }
 
@@ -142,7 +142,7 @@ const run = async () => {
             const address = message.text;
             await addAddress(resChatId, address, reply);
           } catch (err) {
-            reply(`에러발생: ${JSON.stringify(err)}`);
+            reply(`Error Occured: ${JSON.stringify(err)}`);
           }
         }
 
@@ -151,7 +151,7 @@ const run = async () => {
             const address = message.text;
             await removeAddress(resChatId, address, reply);
           } catch (err) {
-            reply(`에러발생: ${JSON.stringify(err)}`);
+            reply(`Error Occured: ${JSON.stringify(err)}`);
           }
         }
 
@@ -160,7 +160,7 @@ const run = async () => {
             const address = message.text;
             await showBalance(reply, address);
           } catch (err) {
-            reply(`에러발생: ${JSON.stringify(err)}`);
+            reply(`Error Occured: ${JSON.stringify(err)}`);
           }
         }
       }
@@ -170,6 +170,7 @@ const run = async () => {
   bot.catch((err) => {
     console.log('Ooops', err);
   });
+
   bot.startPolling();
   await initListen(bot);
 

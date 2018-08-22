@@ -13,16 +13,18 @@ const showBalance = async (chatId) => {
   const result = await users.child(`/${chatId}/tron/address`).once('value');
   console.log(result.val());
   const myAddress = result.val();
-  if (!myAddress) return bot.telegram.sendMessage(chatId, '등록된 주소가 없습니다.');
+  if (!myAddress) return bot.telegram.sendMessage(chatId, 'Not find tron addresses.');
 
   const client = new Client();
   for (const addr of Object.keys(myAddress)) {
     const preTokens = (myAddress[addr] && myAddress[addr].tokens) || {};
-    let msg = `<b>[잔액 ${Object.keys(preTokens).length > 0 ? '변동' : '등록'} 알림]</b>\n`;
-    msg += `<b>주소: ${addr}</b>\n\n`;
+    let msg = `<b>[Notification of balance ${Object.keys(preTokens).length > 0 ? 'change' : 'registration'}]</b>\n`;
+    msg += `<b>${addr}</b>\n`;
     const currentTokens = {};
     const accountInfo = await client.getAddress(addr);
     const balances = accountInfo.balances || [];
+    const changed = [];
+    const notChanged = [];
     for (const token of balances) {
       const { name, balance } = token;
       const bal = Math.floor(balance);
@@ -30,9 +32,9 @@ const showBalance = async (chatId) => {
         currentTokens[name] = bal;
         const preBal = preTokens[name];
         if (bal !== preBal && Object.keys(preTokens).length > 0) {
-          msg += `<b> - [변경] ${name}:  ${numberformat(preBal)} => ${numberformat(bal)}</b>\n`;
+          changed.push(`<b> - [Changed] ${name}:  ${numberformat(preBal)} => ${numberformat(bal)}</b>`);
         } else {
-          msg += `- ${name}:  ${numberformat(bal)}\n`;
+          notChanged.push(`- ${name}:  ${numberformat(bal)}`);
         }
         
         console.log(name === 'TRX' ? chalk.green(addr, name, bal) : chalk.white(addr, name, bal));
@@ -44,6 +46,15 @@ const showBalance = async (chatId) => {
       updates[`/${chatId}/tron/address/${addr}/tokens`] = currentTokens;
       updates[`/${chatId}/tron/address/${addr}/updateTime`] = new Date();
       users.update(updates);
+      if (changed.length > 0) {
+        msg += changed.join('\n');
+        msg += '\n';
+      }
+
+      if (notChanged.length > 0) {
+        msg += notChanged.join('\n');
+      }
+
       bot.telegram.sendMessage(chatId, msg, { parse_mode: 'HTML' });
     }
   }
@@ -55,27 +66,27 @@ exports.addAddress = async (chatId, addr, reply) => {
   const updates = {};
   const address = data.val() || {};
   if (address[addr]) {
-    return reply('이미 추가된 주소입니다.');
+    return reply('Already added tron address.');
   }
   address[addr] = {
     createTime: new Date(),
   };
   updates[`/${chatId}/tron/address`] = address;
   users.update(updates);
-  return reply(`${addr} 주소가 추가되었습니다.`);
+  return reply(`${addr} tron address added.`);
 };
 
 exports.getAddresses = async (reply, chatId) => {
   const data = await users.child(`/${chatId}/tron/address`).once('value');
   const address = data.val() || [];
-  if (address.length === 0) return reply('추가된 주소가 없습니다.');
+  if (address.length === 0) return reply('No added tron addresses.');
   return reply(address.join('\n'));
 };
 
 exports.startListenAccount = async (chatId, send = true) => {
   const data = await users.child(`/${chatId}/tron/address`).once('value');
   const address = data.val() || [];
-  if (address.length === 0) return bot.telegram.sendMessage(chatId, '추가된 주소가 없습니다.');
+  if (address.length === 0) return bot.telegram.sendMessage(chatId, 'No added tron addresses.');
 
   if (jobs[chatId]) {
     const { job } = jobs[chatId];
@@ -118,7 +129,7 @@ exports.getAddress = async (reply, chatId) => {
   console.log(data.val());
   const address = data.val() || {};
   if (Object.keys(address).length === 0) {
-    return reply('추가된 주소가 없습니다.');
+    return reply('No added tron addresses.');
   }
 
   return reply(Object.keys(address).join('\n'));
@@ -135,9 +146,9 @@ exports.removeAddress = async (chatId, addr, reply) => {
     if (Object.keys(address).length === 1) {
       this.stopListenAccount(reply, chatId);
     }
-    return reply(`${addr} 주소가 삭제되었습니다.`);
+    return reply(`${addr} tron address removed.`);
   }
-  return reply('입력되지 않는 주소입니다.');
+  return reply('Not found tron address.');
 };
 
 exports.initListen = async (myBot) => {
