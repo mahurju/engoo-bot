@@ -28,7 +28,7 @@
     "telegraf": "^3.22.2"
   },
   "engines": {
-    "node": "8.x"
+    "node": "10.x"
   },
   "repository": {
     "url": "https://glitch.com/edit/#!/hello-express"

@@ -73,6 +73,10 @@ exports.getAddresses = async (reply, chatId) => {
 };
 
 exports.startListenAccount = async (chatId, send = true) => {
+  const data = await users.child(`/${chatId}/tron/address`).once('value');
+  const address = data.val() || [];
+  if (address.length === 0) return bot.telegram.sendMessage(chatId, '추가된 주소가 없습니다.');
+
   if (jobs[chatId]) {
     const { job } = jobs[chatId];
     if (job && job.nextInvocation()) {
@@ -128,6 +132,9 @@ exports.removeAddress = async (chatId, addr, reply) => {
   if (address[addr]) {
     updates[`/${chatId}/tron/address/${addr}`] = null;
     users.update(updates);
+    if (Object.keys(address).length === 1) {
+      this.stopListenAccount(reply, chatId);
+    }
     return reply(`${addr} 주소가 삭제되었습니다.`);
   }
   return reply('입력되지 않는 주소입니다.');
