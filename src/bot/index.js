@@ -16,11 +16,11 @@ const run = async () => {
     return entities.some(e => e.type === 'bot_command');
   };
 
-  const helpMsg = ['/addAddr [Add tron address]',
-    '/getAddr [Show tron addresses]',
-    '/removeAddr [Remove tron address]',
-    '/startListen [Start tron address balance change notification]',
-    '/stopListen [Stop tron address balance change notification]',
+  const helpMsg = ['/addaddress [Add tron address]',
+    '/getaddress [Show tron addresses]',
+    '/removeaddress [Remove tron address]',
+    '/startlisten [Start tron address balance change notification]',
+    '/stoplisten [Stop tron address balance change notification]',
     '/address [Show tron address balance]'];
 
   bot.help(ctx => ctx.reply(helpMsg.join('\n')));
@@ -56,15 +56,7 @@ const run = async () => {
     await startListenAccount(resChatId);
   });
 
-  bot.command('stopListen', async ({ reply, from: { id: resChatId } }) => {
-    await stopListenAccount(reply, resChatId);
-  });
-
-  bot.command('startListen', async ({ from: { id: resChatId } }) => {
-    await startListenAccount(resChatId);
-  });
-
-  bot.command('stopListen', async ({ reply, from: { id: resChatId } }) => {
+  bot.command('stoplisten', async ({ reply, from: { id: resChatId } }) => {
     await stopListenAccount(reply, resChatId);
   });
 
@@ -76,13 +68,13 @@ const run = async () => {
     stop(reply, resChatId);
   });
 
-  bot.command('addAddr', ({ reply }) => reply('/addAddr Reply tron address to add.', { reply_markup: { force_reply: true, selective: true } }));
+  bot.command('addaddress', ({ reply }) => reply('/addAddr Reply tron address to add.', { reply_markup: { force_reply: true, selective: true } }));
 
-  bot.command('getAddr', ({ reply, from: { id: resChatId } }) => {
+  bot.command('getaddress', ({ reply, from: { id: resChatId } }) => {
     getAddress(reply, resChatId);
   });
 
-  bot.command('removeAddr', ({ reply }) => reply('/removeAddr Reply tron address to remove.', { reply_markup: { force_reply: true, selective: true } }));
+  bot.command('removeaddress', ({ reply }) => reply('/removeAddr Reply tron address to remove.', { reply_markup: { force_reply: true, selective: true } }));
 
   bot.command('schedule', async ({ reply }) => {
     await show(reply);
@@ -137,7 +129,7 @@ const run = async () => {
           }
         }
 
-        if (text.startsWith('/addAddr')) {
+        if (text.startsWith('/addaddress')) {
           try {
             const address = message.text;
             await addAddress(resChatId, address, reply);
@@ -146,7 +138,7 @@ const run = async () => {
           }
         }
 
-        if (text.startsWith('/removeAddr')) {
+        if (text.startsWith('/removeaddress')) {
           try {
             const address = message.text;
             await removeAddress(resChatId, address, reply);
