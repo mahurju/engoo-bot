@@ -52,7 +52,7 @@ const run = async () => {
 
   bot.command('address', ({ reply }) => reply('/address  Reply tron address to show balance.', { reply_markup: { force_reply: true, selective: true } }));
 
-  bot.command('startListen', async ({ from: { id: resChatId } }) => {
+  bot.command('startlisten', async ({ from: { id: resChatId } }) => {
     await startListenAccount(resChatId);
   });
 

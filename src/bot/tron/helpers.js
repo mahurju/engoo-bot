@@ -16,3 +16,8 @@ exports.getAllAccountInstances = (password) => {
   }, []);
   return accountInstances;
 };
+
+exports.checkAddressPattern = (address) => {
+  const pattern = /^T\w{33}$/i;
+  return pattern.test(address);
+};
