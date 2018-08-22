@@ -50,7 +50,7 @@ const run = async () => {
     },
   }));
 
-  bot.command('address', ({ reply }) => reply('/address 조회할 주소를 입력하세요.', { reply_markup: { force_reply: true, selective: true } }));
+  bot.command('address', ({ reply }) => reply('/address  Reply tron address to show balance.', { reply_markup: { force_reply: true, selective: true } }));
 
   bot.command('startListen', async ({ from: { id: resChatId } }) => {
     await startListenAccount(resChatId);
