@@ -2,7 +2,7 @@ const { Client } = require('@tronscan/client');
 const chalk = require('chalk');
 const schedule = require('node-schedule');
 const stringify = require('json-stable-stringify');
-const users = require('../../db')('users');
+const users = require('../../db')();
 const { numberformat } = require('../utils');
 
 let bot = null;
@@ -10,7 +10,7 @@ const jobs = {};
 
 const showBalance = async (chatId) => {
   console.log('===========================================================');
-  const result = await users.child(`/${chatId}/address`).once('value');
+  const result = await users.child(`/${chatId}/tron/address`).once('value');
   console.log(result.val());
   const myAddress = result.val();
   if (!myAddress) return bot.telegram.sendMessage(chatId, '등록된 주소가 없습니다.');
@@ -41,8 +41,8 @@ const showBalance = async (chatId) => {
 
     if (stringify(preTokens) !== stringify(currentTokens)) {
       const updates = {};
-      updates[`/${chatId}/address/${addr}/tokens`] = currentTokens;
-      updates[`/${chatId}/address/${addr}/updateTime`] = new Date();
+      updates[`/${chatId}/tron/address/${addr}/tokens`] = currentTokens;
+      updates[`/${chatId}/tron/address/${addr}/updateTime`] = new Date();
       users.update(updates);
       bot.telegram.sendMessage(chatId, msg, { parse_mode: 'HTML' });
     }
@@ -50,7 +50,7 @@ const showBalance = async (chatId) => {
 };
 
 exports.addAddress = async (chatId, addr, reply) => {
-  const data = await users.child(`/${chatId}/address`).once('value');
+  const data = await users.child(`/${chatId}/tron/address`).once('value');
   console.log(data.val());
   const updates = {};
   const address = data.val() || {};
@@ -60,13 +60,13 @@ exports.addAddress = async (chatId, addr, reply) => {
   address[addr] = {
     createTime: new Date(),
   };
-  updates[`/${chatId}/address`] = address;
+  updates[`/${chatId}/tron/address`] = address;
   users.update(updates);
   return reply(`${addr} 주소가 추가되었습니다.`);
 };
 
 exports.getAddresses = async (reply, chatId) => {
-  const data = await users.child(`/${chatId}/address`).once('value');
+  const data = await users.child(`/${chatId}/tron/address`).once('value');
   const address = data.val() || [];
   if (address.length === 0) return reply('추가된 주소가 없습니다.');
   return reply(address.join('\n'));
@@ -87,7 +87,7 @@ exports.startListenAccount = async (chatId, send = true) => {
     }),
   };
   const updates = {};
-  updates[`/${chatId}/listenChangeBalances`] = true;
+  updates[`/${chatId}/tron/listenChangeBalances`] = true;
   users.update(updates);
   if (send) return bot.telegram.sendMessage(chatId, 'Your tron accounts are to start listen.');
   return false;
@@ -104,13 +104,13 @@ exports.stopListenAccount = (reply, chatId) => {
 
   job.cancel();
   const updates = {};
-  updates[`/${chatId}/listenChangeBalances`] = false;
+  updates[`/${chatId}/tron/listenChangeBalances`] = false;
   users.update(updates);
   return reply('Your tron accounts are to stop listen.');
 };
 
 exports.getAddress = async (reply, chatId) => {
-  const data = await users.child(`/${chatId}/address`).once('value');
+  const data = await users.child(`/${chatId}/tron/address`).once('value');
   console.log(data.val());
   const address = data.val() || {};
   if (Object.keys(address).length === 0) {
@@ -121,12 +121,12 @@ exports.getAddress = async (reply, chatId) => {
 };
 
 exports.removeAddress = async (chatId, addr, reply) => {
-  const data = await users.child(`/${chatId}/address`).once('value');
+  const data = await users.child(`/${chatId}/tron/address`).once('value');
   console.log(data.val());
   const updates = {};
   const address = data.val() || {};
   if (address[addr]) {
-    updates[`/${chatId}/address/${chatId}`] = null;
+    updates[`/${chatId}/tron/address/${addr}`] = null;
     users.update(updates);
     return reply(`${addr} 주소가 삭제되었습니다.`);
   }
@@ -139,9 +139,29 @@ exports.initListen = async (myBot) => {
   const allUsers = data.val();
   console.log(allUsers);
   for (const chatId of Object.keys(allUsers)) {
-    const { listenChangeBalances } = allUsers[chatId];
+    const { listenChangeBalances } = (allUsers[chatId] && allUsers[chatId].tron) || {};
     if (listenChangeBalances === true) {
       await this.startListenAccount(chatId, false);
     }
   }
 };
+
+// exports.initListen = async (myBot) => {
+//   bot = myBot;
+//   const data = await users.child('users').once('value');
+//   const allUsers = data.val();
+//   const updates = {}
+//   // updates[`/${chatId}/tron/address/${addr}`] = null;
+//   // users.update(updates);
+//   console.log(allUsers);
+//   for (const chatId of Object.keys(allUsers)) {
+//     updates[chatId] = {
+//       tron: {
+//         address: allUsers[chatId].address,
+//         listenChangeBalances: allUsers[chatId].listenChangeBalances,
+//       },
+//     };
+//   }
+//   console.log(updates);
+//   users.update(updates);
+// };

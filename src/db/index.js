@@ -16,8 +16,8 @@ ref.once('value', (snapshot) => {
   console.log(snapshot.val());
 });
 
-module.exports = (child) => {
-  return ref.child(child);
+module.exports = () => {
+  return ref;
 };
 
 
