@@ -68,13 +68,13 @@ const run = async () => {
     stop(reply, resChatId);
   });
 
-  bot.command('addaddress', ({ reply }) => reply('/addAddr Reply tron address to add.', { reply_markup: { force_reply: true, selective: true } }));
+  bot.command('addaddress', ({ reply }) => reply('/addaddress Reply tron address to add.', { reply_markup: { force_reply: true, selective: true } }));
 
   bot.command('getaddress', ({ reply, from: { id: resChatId } }) => {
     getAddress(reply, resChatId);
   });
 
-  bot.command('removeaddress', ({ reply }) => reply('/removeAddr Reply tron address to remove.', { reply_markup: { force_reply: true, selective: true } }));
+  bot.command('removeaddress', ({ reply }) => reply('/removeaddress Reply tron address to remove.', { reply_markup: { force_reply: true, selective: true } }));
 
   bot.command('schedule', async ({ reply }) => {
     await show(reply);
