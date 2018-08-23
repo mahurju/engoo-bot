@@ -14,18 +14,29 @@ const getTeacher = async (teacherNum) => {
   console.log(teacher);
   const { teacher_name: name, image, youtube } = teacher;
 
-  const result = schedules.result.map((data) => {
-    const { lesson_date: lessenDate, scheduled_start_time: startTime } = data;
-    return { lessenDate, startTime: startTime.substring(0, 5) };
-  }).reduce((prev, next) => {
+  const schedulesMap = schedules.result.map((data) => {
+    const { lesson_date: lessenDate, scheduled_start_time: startTime, status } = data;
+    return { lessenDate, startTime: startTime.substring(0, 5), status };
+  });
+  
+  const result = schedulesMap.reduce((prev, next) => {
     const { lessenDate, startTime } = next;
     if (!prev[lessenDate]) prev[lessenDate] = [];
     prev[lessenDate].push(startTime);
     return prev;
   }, {});
+
+  const resultWithStatus = schedulesMap.reduce((prev, next) => {
+    const { lessenDate, startTime, status } = next;
+    if (!prev[lessenDate]) prev[lessenDate] = {};
+    prev[lessenDate][startTime] = status === 0 ? '예약 가능' : '예약됨';
+    return prev;
+  }, {});
+
+
   console.log({ name, image: image.split('/').filter(data => data !== 'image').join('/'), youtube, schedules: result });
 
-  return { name, image, youtube, schedules: result };
+  return { name, image, youtube, schedules: result, schedulesWithStatus: resultWithStatus };
 };
 
 const getSchedules = async (chatId) => {
@@ -36,7 +47,7 @@ const getSchedules = async (chatId) => {
   
   await Promise.all(Object.keys(teachers).map(async (teacherNum) => {
     console.log(`TeacherNumber: ${teacherNum} ====================`);
-    const { schedules, name } = await getTeacher(teacherNum);
+    const { schedules, schedulesWithStatus, name } = await getTeacher(teacherNum);
     console.log(name, schedules);
     const preSchedules = teachers[teacherNum].schedules || {};
 
@@ -46,11 +57,15 @@ const getSchedules = async (chatId) => {
       updates[`/engoo/${chatId}/teacher/${teacherNum}/updateTime`] = new Date();
       users.update(updates);
 
-      if (Object.keys(schedules).length > 0) {
+      if (Object.keys(schedulesWithStatus).length > 0) {
         let msg = `<b>* ${name} teatcher</b>\n<b>New Schedule has been updated</b>\n\nhttps://engoo.co.kr/teachers/${teacherNum}`;
-        Object.keys(schedules).reduce((prev, next) => {
+        Object.keys(schedulesWithStatus).reduce((prev, next) => {
           msg += `\n\n<b>* ${next}</b>\n`;
-          msg += schedules[next].join('\n');
+          const date = next;
+          Object.keys(schedulesWithStatus[date]).reduce((prev2, next2) => {
+            msg += `- ${next2}: ${schedulesWithStatus[date][next2]}\n`;
+            return msg;
+          }, msg);
           return msg;
         }, msg);
         bot.telegram.sendMessage(chatId, msg, { parse_mode: 'HTML' });
@@ -131,11 +146,10 @@ exports.startListen = async (chatId, send = true) => {
     }
   }
 
-  jobs[chatId] = {
-    job: schedule.scheduleJob('*/1 * * * *', async () => {
-      await getSchedules(chatId);
-    }),
-  };
+  jobs[chatId] = schedule.scheduleJob('*/20 * * * * *', async () => {
+    await getSchedules(chatId);
+  });
+
   const updates = {};
   updates[`/engoo/${chatId}/listenChange`] = true;
   users.update(updates);
@@ -144,15 +158,16 @@ exports.startListen = async (chatId, send = true) => {
 };
 
 exports.stopListen = (reply, chatId) => {
-  const { job = {} } = jobs[chatId];
+  const job = jobs[chatId];
 
   console.log(job && job.nextInvocation());
 
-  if (!job.nextInvocation()) {
+  if (!job || !job.nextInvocation()) {
     return reply('Your teachers jobs are not running.');
   }
 
   job.cancel();
+  jobs[chatId] = null;
   const updates = {};
   updates[`/engoo/${chatId}/listenChange`] = false;
   users.update(updates);
