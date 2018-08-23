@@ -188,17 +188,35 @@ exports.initListen = async (myBot) => {
   }
 };
 
-exports.schedule = async (reply, teacherNum) => {
-  const { name, schedules } = await getTeacher(teacherNum);
-  if (Object.keys(schedules).length > 0) {
-    let msg = `<b>* ${name} teatcher schedules</b>`;
-    Object.keys(schedules).reduce((prev, next) => {
-      msg += `\n\n<b>* ${next}</b>\n`;
-      msg += schedules[next].join('\n');
-      return msg;
-    }, msg);
-    reply(msg, { parse_mode: 'HTML' });
-  } else {
-    reply('Schdules are not found.');
-  }
+exports.schedule = async (reply, chatId) => {
+  const result = await users.child(`/engoo/${chatId}/teacher`).once('value');
+  console.log(result.val());
+  const teachers = result.val();
+  if (!teachers) return bot.telegram.sendMessage(chatId, 'Not find teacher.');
+  
+  await Promise.all(Object.keys(teachers).map(async (teacherNum) => {
+    console.log(`TeacherNumber: ${teacherNum} ====================`);
+    const { schedules, schedulesWithStatus, name } = await getTeacher(teacherNum);
+
+    const updates = {};
+    updates[`/engoo/${chatId}/teacher/${teacherNum}/schedules`] = schedules;
+    updates[`/engoo/${chatId}/teacher/${teacherNum}/updateTime`] = new Date();
+    users.update(updates);
+
+    let msg = `<b>* ${name} teatcher</b>\nhttps://engoo.co.kr/teachers/${teacherNum}`;
+    if (Object.keys(schedulesWithStatus).length > 0) {
+      Object.keys(schedulesWithStatus).reduce((prev, next) => {
+        msg += `\n\n<b>* ${next}</b>\n`;
+        const date = next;
+        Object.keys(schedulesWithStatus[date]).reduce((prev2, next2) => {
+          msg += `- ${next2}: ${schedulesWithStatus[date][next2]}\n`;
+          return msg;
+        }, msg);
+        return msg;
+      }, msg);
+      bot.telegram.sendMessage(chatId, msg, { parse_mode: 'HTML' });
+    } else {
+      bot.telegram.sendMessage(chatId, msg += '\n\nSchdules are not found.', { parse_mode: 'HTML' });
+    }
+  }));
 };
