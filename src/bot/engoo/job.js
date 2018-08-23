@@ -132,7 +132,7 @@ exports.startListen = async (chatId, send = true) => {
   }
 
   jobs[chatId] = {
-    job: schedule.scheduleJob('*/10 * * * * *', async () => {
+    job: schedule.scheduleJob('*/1 * * * *', async () => {
       await getSchedules(chatId);
     }),
   };
