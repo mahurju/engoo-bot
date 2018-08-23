@@ -139,7 +139,7 @@ exports.startListen = async (chatId, send = true) => {
   if (address.length === 0) return bot.telegram.sendMessage(chatId, 'Not found teacher to start.');
 
   if (jobs[chatId]) {
-    const { job } = jobs[chatId];
+    const job = jobs[chatId];
     if (job && job.nextInvocation()) {
       if (send) return bot.telegram.sendMessage(chatId, 'Your teachers are already listening now..');
       return false;
