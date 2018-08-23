@@ -95,7 +95,7 @@ exports.get = async (reply, chatId) => {
   
   let msg = '<b>[Teacher List]</b>\n\n';
   msg = Object.keys(teacher).reduce((prev, next) => {
-    msg += `- ${teacher[next].name} - ${next}\n`;
+    msg += `* ${teacher[next].name} - ${next}\n`;
     return msg;
   }, msg);
   return reply(msg, { parse_mode: 'HTML' });
