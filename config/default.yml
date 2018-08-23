@@ -1,14 +1,6 @@
 engoo:
   api: https://engoo.co.kr/teachers/
-  teachers:
-    - 25420
-    - 25215
-
-telegram:
-  myChatId: 237293953
-  
-tron:
-  trxTarget: TFmQQH14pMZhitALbKEZBDitKaMW3KX68B
+  photo: https://image-eikaiwa.engoo.com
 
 firebase:
   databaseURL: 'https://marucool-f2bb1.firebaseio.com'
