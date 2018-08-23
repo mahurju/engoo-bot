@@ -19,14 +19,16 @@ const run = async () => {
     '/removeteacher [Remove Teacher]',
     '/startlisten [Start Teacher schedule change notification]',
     '/stoplisten [Stop Teacher schedule change notification]',
-    '/schedule [Show Teacher Schedule]'];
+    '/schedule [Show Teacher Schedules]'];
 
   bot.help(ctx => ctx.reply(helpMsg.join('\n')));
   bot.start(ctx => ctx.reply(helpMsg.join('\n')));
 
   bot.command('addteacher', ({ reply }) => reply('/addteacher Reply teacher number to add.', { reply_markup: { force_reply: true, selective: true } }));
 
-  bot.command('schedule', ({ reply }) => reply('/schedule Reply teacher number to show schedules.', { reply_markup: { force_reply: true, selective: true } }));
+  bot.command('schedule', async ({ reply, from: { id: resChatId } }) => {
+    await schedule(reply, resChatId);
+  });
 
   bot.command('getteacher', async ({ reply, from: { id: resChatId } }) => {
     await get(reply, resChatId);
@@ -64,15 +66,6 @@ const run = async () => {
           try {
             const teacherNum = message.text;
             await remove(resChatId, teacherNum, reply);
-          } catch (err) {
-            reply(`Error Occured: ${JSON.stringify(err)}`);
-          }
-        }
-
-        if (text.startsWith('/schedule')) {
-          try {
-            const teacherNum = message.text;
-            await schedule(reply, teacherNum);
           } catch (err) {
             reply(`Error Occured: ${JSON.stringify(err)}`);
           }
