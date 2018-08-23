@@ -47,7 +47,7 @@ const getSchedules = async (chatId) => {
       users.update(updates);
 
       if (Object.keys(schedules).length > 0) {
-        let msg = `<b>* ${name} teatcher</b>\n<b>New Schedule has been updated</b>`;
+        let msg = `<b>* ${name} teatcher</b>\n<b>New Schedule has been updated</b>\n\nhttps://engoo.co.kr/teachers/${teacherNum}`;
         Object.keys(schedules).reduce((prev, next) => {
           msg += `\n\n<b>* ${next}</b>\n`;
           msg += schedules[next].join('\n');
