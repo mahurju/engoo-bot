@@ -2,7 +2,7 @@ const nconf = require('nconf');
 const axios = require('axios');
 const schedule = require('node-schedule');
 const stringify = require('json-stable-stringify');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const users = require('../../db')();
 
 const { api } = nconf.get('engoo');
@@ -13,8 +13,8 @@ const getTeacher = async (teacherNum) => {
   const res = await axios.get(`${api}${teacherNum}.json`);
   
   const { schedules } = res.data;
-  console.log(`${api}/${teacherNum}.json`);
-  console.log(JSON.stringify(res.data, null, 2));
+  console.log(`${api}${teacherNum}.json`);
+  // console.log(JSON.stringify(res.data, null, 2));
   // console.log('test', JSON.stringify(teacher, null, 2), JSON.stringify(schedules, null, 2));
   // const { teacher_name: name, image, youtube } = teacher || {};
 
@@ -43,30 +43,67 @@ const getTeacher = async (teacherNum) => {
   return { schedules: result, schedulesWithStatus: resultWithStatus };
 };
 
+const checkAlarmOff = async (chatId) => {
+  const result = await users.child(`/engoo/${chatId}/alarmOffTime`).once('value');
+  const alarmOffTime = result.val();
+  console.log('alarmOffTime', alarmOffTime);
+  if (!alarmOffTime) {
+    console.log('now is alarm on time.');
+    return true;
+  }
+
+  const [start, end] = alarmOffTime.split('-');
+  const startTime = moment().tz('Asia/Seoul');
+  startTime.hours(parseInt(start, 10));
+  startTime.minutes(0);
+  startTime.second(0);
+
+  const endTime = moment().tz('Asia/Seoul');
+  endTime.hours(parseInt(end, 10));
+  endTime.minutes(0);
+  endTime.second(0);
+
+  const now = moment().tz('Asia/Seoul');
+
+  if (now.isAfter(startTime) && now.isBefore(endTime)) {
+    console.log('now is alarm off time.');
+    return false;
+  }
+
+  console.log('now is alarm on time.');
+  return true;
+};
+
 const getSchedules = async (chatId) => {
+  const res = await checkAlarmOff(chatId);
+  if (!res) return;
+
   const result = await users.child(`/engoo/${chatId}/teacher`).once('value');
-  console.log(result.val());
+  // console.log(result.val());
   const teachers = result.val();
-  if (!teachers) return bot.telegram.sendMessage(chatId, 'Not find teacher.');
-  
+  if (!teachers) {
+    bot.telegram.sendMessage(chatId, 'Not found teacher.');
+    return;
+  }
+
   await Promise.all(Object.keys(teachers).map(async (teacherNum) => {
-    console.log(`TeacherNumber: ${teacherNum} ====================`);
+    // console.log(`TeacherNumber: ${teacherNum} ====================`);
     const { schedules, schedulesWithStatus } = await getTeacher(teacherNum);
-    console.log('remote', schedules);
+    // console.log('remote', schedules);
     const preSchedules = teachers[teacherNum].schedules || {};
-    console.log('before', preSchedules);
+    // console.log('before', preSchedules);
     if (Object.keys(preSchedules).length > 0) {
       Object.keys(preSchedules).map((date) => {
         const scheduleDate = moment(date);
         const today = moment().startOf('day');
 
         if (scheduleDate.isBefore(today)) {
-          console.log('delete date....', date);
+          // console.log('delete date....', date);
           delete preSchedules[date];
         }
       });
     }
-    console.log('after', preSchedules);
+    // console.log('after', preSchedules);
 
     if (stringify(preSchedules) !== stringify(schedules)) {
       const updates = {};
@@ -156,6 +193,18 @@ exports.remove = async (chatId, teacherNum, reply) => {
     return reply(`${teacherNum} removed.`);
   }
   return reply('Not found teacher.');
+};
+
+exports.setAlarmOff = async (chatId, timeRange = '', reply) => {
+  const pattern = /^\d{2}-\d{2}$/;
+  if (!pattern.test(timeRange)) {
+    return reply('invalid time range\n(ex. 23-06)');
+  }
+  const updates = {};
+  updates[`/engoo/${chatId}/alarmOffTime`] = timeRange;
+  users.update(updates);
+  reply(`Set alarm off time to ${timeRange}`);
+  return false;
 };
 
 exports.startListen = async (chatId, send = true) => {
