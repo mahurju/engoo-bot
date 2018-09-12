@@ -197,11 +197,11 @@ exports.remove = async (chatId, teacherNum, reply) => {
 
 exports.setAlarmOff = async (chatId, timeRange = '', reply) => {
   const pattern = /^\d{2}-\d{2}$/;
-  if (!pattern.test(timeRange)) {
+  if (timeRange !== 'none' && !pattern.test(timeRange)) {
     return reply('invalid time range\n(ex. 23-06)');
   }
   const updates = {};
-  updates[`/engoo/${chatId}/alarmOffTime`] = timeRange;
+  updates[`/engoo/${chatId}/alarmOffTime`] = timeRange === 'none' ? null : timeRange;
   users.update(updates);
   reply(`Set alarm off time to ${timeRange}`);
   return false;

@@ -37,7 +37,7 @@ const run = async () => {
 
   bot.command('removeteacher', ({ reply }) => reply('/removeteacher Reply teacher number to remove.', { reply_markup: { force_reply: true, selective: true } }));
 
-  bot.command('setalarmoff', ({ reply }) => reply('/setalarmoff Reply alarm off time range.\n(ex. 23-06)', { reply_markup: { force_reply: true, selective: true } }));
+  bot.command('setalarmoff', ({ reply }) => reply('/setalarmoff Reply alarm off time range.\n(ex. 23-06)\nIf you want to get alarm all the time, reply none.', { reply_markup: { force_reply: true, selective: true } }));
 
   bot.command('startlisten', async ({ from: { id: resChatId } }) => {
     await startListen(resChatId);
