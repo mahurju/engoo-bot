@@ -2,6 +2,7 @@ const nconf = require('nconf');
 const axios = require('axios');
 const schedule = require('node-schedule');
 const stringify = require('json-stable-stringify');
+const moment = require('moment');
 const users = require('../../db')();
 
 const { api } = nconf.get('engoo');
@@ -50,9 +51,22 @@ const getSchedules = async (chatId) => {
   
   await Promise.all(Object.keys(teachers).map(async (teacherNum) => {
     console.log(`TeacherNumber: ${teacherNum} ====================`);
-    const { schedules, schedulesWithStatus, name } = await getTeacher(teacherNum);
-    console.log(name, schedules);
+    const { schedules, schedulesWithStatus } = await getTeacher(teacherNum);
+    console.log('remote', schedules);
     const preSchedules = teachers[teacherNum].schedules || {};
+    console.log('before', preSchedules);
+    if (Object.keys(preSchedules).length > 0) {
+      Object.keys(preSchedules).map((date) => {
+        const scheduleDate = moment(date);
+        const today = moment().startOf('day');
+
+        if (scheduleDate.isBefore(today)) {
+          console.log('delete date....', date);
+          delete preSchedules[date];
+        }
+      });
+    }
+    console.log('after', preSchedules);
 
     if (stringify(preSchedules) !== stringify(schedules)) {
       const updates = {};
