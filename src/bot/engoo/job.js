@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 const nconf = require('nconf');
 const axios = require('axios');
 const schedule = require('node-schedule');
@@ -36,10 +37,6 @@ const getTeacher = async (teacherNum) => {
     prev[lessenDate][startTime] = status === 0 ? '예약 가능' : '예약됨';
     return prev;
   }, {});
-
-
-  // console.log({ name, image: (image || []).split('/').filter(data => data !== 'image').join('/'), youtube, schedules: result });
-
   return { schedules: result, schedulesWithStatus: resultWithStatus };
 };
 
@@ -172,7 +169,7 @@ exports.get = async (reply, chatId) => {
   
   let msg = '<b>[Teacher List]</b>\n\n';
   msg = Object.keys(teacher).reduce((prev, next) => {
-    msg += `* ${teacher[next].name} - ${next}\n`;
+    msg += `- ${next}\n`;
     return msg;
   }, msg);
   return reply(msg, { parse_mode: 'HTML' });
