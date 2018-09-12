@@ -69,8 +69,6 @@ const getSchedules = async (chatId) => {
           return msg;
         }, msg);
         bot.telegram.sendMessage(chatId, msg, { parse_mode: 'HTML' });
-      } else {
-        bot.telegram.sendMessage(chatId, 'Schdules are not found.');
       }
     }
   }));
