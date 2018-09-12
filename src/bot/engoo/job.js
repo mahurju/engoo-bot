@@ -86,14 +86,29 @@ exports.add = async (chatId, teacherNum, reply) => {
     return reply('Already added teacher.');
   }
 
-  const { schedules } = await getTeacher(teacherNum);
+  const { schedules, schedulesWithStatus } = await getTeacher(teacherNum);
   teacher[teacherNum] = {
     schedules,
     createTime: new Date(),
   };
   updates[`/engoo/${chatId}/teacher`] = teacher;
   users.update(updates);
-  return reply(`${teacherNum} added.`);
+
+  let msg = `<b>* TeacherNumber: ${teacherNum}</b>\nhttps://engoo.co.kr/teachers/${teacherNum}`;
+  if (Object.keys(schedulesWithStatus).length > 0) {
+    Object.keys(schedulesWithStatus).reduce((prev, next) => {
+      msg += `\n\n<b>* ${next}</b>\n`;
+      const date = next;
+      Object.keys(schedulesWithStatus[date]).reduce((prev2, next2) => {
+        msg += `- ${next2}: ${schedulesWithStatus[date][next2]}\n`;
+        return msg;
+      }, msg);
+      return msg;
+    }, msg);
+  }
+
+  msg += `\n\n${teacherNum} added.`;
+  reply(msg, { parse_mode: 'HTML' });
 };
 
 exports.get = async (reply, chatId) => {
