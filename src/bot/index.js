@@ -45,7 +45,7 @@ const run = async () => {
   });
 
   bot.on('message', async (ctx) => {
-    const { message, reply, replyWithPhoto } = ctx;
+    const { message, reply } = ctx;
     const resChatId = ctx.from.id;
     if (!hasBotCommands(message.entities)) {
       console.log(JSON.stringify(message, null, 2));
@@ -56,7 +56,7 @@ const run = async () => {
         if (text.startsWith('/addteacher')) {
           try {
             const teacherNum = message.text;
-            await add(resChatId, teacherNum, reply, replyWithPhoto);
+            await add(resChatId, teacherNum, reply);
           } catch (err) {
             reply(`Error Occured: ${JSON.stringify(err)}`);
           }
