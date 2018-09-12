@@ -10,9 +10,10 @@ const jobs = {};
 
 const getTeacher = async (teacherNum) => {
   const res = await axios.get(`${api}/${teacherNum}.json`);
+  console.log(res);
   const { teacher, schedules } = res.data;
-  console.log(teacher);
-  const { teacher_name: name, image, youtube } = teacher;
+  console.log('test', teacher);
+  const { teacher_name: name, image, youtube } = teacher || {};
 
   const schedulesMap = schedules.result.map((data) => {
     const { lesson_date: lessenDate, scheduled_start_time: startTime, status } = data;
@@ -34,7 +35,7 @@ const getTeacher = async (teacherNum) => {
   }, {});
 
 
-  console.log({ name, image: image.split('/').filter(data => data !== 'image').join('/'), youtube, schedules: result });
+  // console.log({ name, image: (image || []).split('/').filter(data => data !== 'image').join('/'), youtube, schedules: result });
 
   return { name, image, youtube, schedules: result, schedulesWithStatus: resultWithStatus };
 };
