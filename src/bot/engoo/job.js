@@ -4,7 +4,7 @@ const schedule = require('node-schedule');
 const stringify = require('json-stable-stringify');
 const users = require('../../db')();
 
-const { api, photo } = nconf.get('engoo');
+const { api } = nconf.get('engoo');
 let bot = null;
 const jobs = {};
 
@@ -192,14 +192,14 @@ exports.schedule = async (reply, chatId) => {
   
   await Promise.all(Object.keys(teachers).map(async (teacherNum) => {
     console.log(`TeacherNumber: ${teacherNum} ====================`);
-    const { schedules, schedulesWithStatus, name } = await getTeacher(teacherNum);
+    const { schedules, schedulesWithStatus } = await getTeacher(teacherNum);
 
     const updates = {};
     updates[`/engoo/${chatId}/teacher/${teacherNum}/schedules`] = schedules;
     updates[`/engoo/${chatId}/teacher/${teacherNum}/updateTime`] = new Date();
     users.update(updates);
 
-    let msg = `<b>* ${name} teatcher</b>\nhttps://engoo.co.kr/teachers/${teacherNum}`;
+    let msg = `<b>* TeacherNumber: ${teacherNum}</b>\nhttps://engoo.co.kr/teachers/${teacherNum}`;
     if (Object.keys(schedulesWithStatus).length > 0) {
       Object.keys(schedulesWithStatus).reduce((prev, next) => {
         msg += `\n\n<b>* ${next}</b>\n`;
