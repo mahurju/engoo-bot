@@ -9,11 +9,13 @@ let bot = null;
 const jobs = {};
 
 const getTeacher = async (teacherNum) => {
-  const res = await axios.get(`${api}/${teacherNum}.json`);
-  console.log(res);
-  const { teacher, schedules } = res.data;
-  console.log('test', teacher);
-  const { teacher_name: name, image, youtube } = teacher || {};
+  const res = await axios.get(`${api}${teacherNum}.json`);
+  
+  const { schedules } = res.data;
+  console.log(`${api}/${teacherNum}.json`);
+  console.log(JSON.stringify(res.data, null, 2));
+  // console.log('test', JSON.stringify(teacher, null, 2), JSON.stringify(schedules, null, 2));
+  // const { teacher_name: name, image, youtube } = teacher || {};
 
   const schedulesMap = schedules.result.map((data) => {
     const { lesson_date: lessenDate, scheduled_start_time: startTime, status } = data;
@@ -37,7 +39,7 @@ const getTeacher = async (teacherNum) => {
 
   // console.log({ name, image: (image || []).split('/').filter(data => data !== 'image').join('/'), youtube, schedules: result });
 
-  return { name, image, youtube, schedules: result, schedulesWithStatus: resultWithStatus };
+  return { schedules: result, schedulesWithStatus: resultWithStatus };
 };
 
 const getSchedules = async (chatId) => {
@@ -59,7 +61,7 @@ const getSchedules = async (chatId) => {
       users.update(updates);
 
       if (Object.keys(schedulesWithStatus).length > 0) {
-        let msg = `<b>* ${name} teatcher</b>\n<b>New Schedule has been updated</b>\n\nhttps://engoo.co.kr/teachers/${teacherNum}`;
+        let msg = `<b>* TeacherNumber: ${teacherNum}</b>\n<b>New Schedule has been updated</b>\n\nhttps://engoo.co.kr/teachers/${teacherNum}`;
         Object.keys(schedulesWithStatus).reduce((prev, next) => {
           msg += `\n\n<b>* ${next}</b>\n`;
           const date = next;
@@ -84,19 +86,14 @@ exports.add = async (chatId, teacherNum, reply) => {
     return reply('Already added teacher.');
   }
 
-  const { name, image, youtube, schedules } = await getTeacher(teacherNum);
+  const { schedules } = await getTeacher(teacherNum);
   teacher[teacherNum] = {
-    name,
-    image,
-    youtube,
     schedules,
     createTime: new Date(),
   };
   updates[`/engoo/${chatId}/teacher`] = teacher;
   users.update(updates);
-  console.log(`${photo}${image}`);
-  // return bot.telegram.sendPhoto(chatId, `${photo}${image}`);
-  return reply(`${name} added.`);
+  return reply(`${teacherNum} added.`);
 };
 
 exports.get = async (reply, chatId) => {
