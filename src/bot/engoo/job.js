@@ -50,19 +50,22 @@ const checkAlarmOff = async (chatId) => {
   }
 
   const [start, end] = alarmOffTime.split('-');
-  const startTime = moment().tz('Asia/Seoul');
-  startTime.hours(parseInt(start, 10));
-  startTime.minutes(0);
-  startTime.second(0);
 
-  const endTime = moment().tz('Asia/Seoul');
-  endTime.hours(parseInt(end, 10));
-  endTime.minutes(0);
-  endTime.second(0);
+  const timeRange = Array.from(Array(24).keys());
+  const startT = parseInt(start, 10);
+  const endT = parseInt(end, 10);
+
+  let setRange = [];
+  if (startT > endT) {
+    setRange = [...timeRange.slice(startT), ...timeRange.slice(0, endT)];
+  } else {
+    setRange = timeRange.slice(startT, endT);
+  }
 
   const now = moment().tz('Asia/Seoul');
+  const nowT = parseInt(now.format('HH'), 10);
 
-  if (now.isAfter(startTime) && now.isBefore(endTime)) {
+  if (setRange.indexOf(nowT) > -1) {
     console.log('now is alarm off time.');
     return false;
   }
@@ -202,11 +205,15 @@ exports.setAlarmOff = async (chatId, timeRange = '', reply) => {
   const startT = parseInt(start, 10);
   const endT = parseInt(end, 10);
 
-  if (startT < 0 || startT > 24) {
+  if (startT === endT) {
     return reply('invalid time range\n(ex. 23-06)');
   }
 
-  if (endT < 0 || endT > 24) {
+  if (startT < 0 || startT > 23) {
+    return reply('invalid time range\n(ex. 23-06)');
+  }
+
+  if (endT < 0 || endT > 23) {
     return reply('invalid time range\n(ex. 23-06)');
   }
 
