@@ -197,10 +197,23 @@ exports.setAlarmOff = async (chatId, timeRange = '', reply) => {
   if (timeRange !== 'none' && !pattern.test(timeRange)) {
     return reply('invalid time range\n(ex. 23-06)');
   }
+
+  const [start, end] = timeRange.split('-');
+  const startT = parseInt(start, 10);
+  const endT = parseInt(end, 10);
+
+  if (startT < 0 || startT > 24) {
+    return reply('invalid time range\n(ex. 23-06)');
+  }
+
+  if (endT < 0 || endT > 24) {
+    return reply('invalid time range\n(ex. 23-06)');
+  }
+
   const updates = {};
   updates[`/engoo/${chatId}/alarmOffTime`] = timeRange === 'none' ? null : timeRange;
   users.update(updates);
-  reply(`Set alarm off time to ${timeRange}`);
+  reply(`Set alarm off time: ${start}:00 ~ ${end}:00.`);
   return false;
 };
 
