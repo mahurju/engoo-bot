@@ -72,7 +72,8 @@ const checkAlarmOff = async (chatId) => {
 };
 
 const getSchedules = async (chatId) => {
-  const alarmOff = await checkAlarmOff(chatId);
+  const res = await checkAlarmOff(chatId);
+  if (!res) return;
 
   const result = await users.child(`/engoo/${chatId}/teacher`).once('value');
   // console.log(result.val());
@@ -107,7 +108,7 @@ const getSchedules = async (chatId) => {
       updates[`/engoo/${chatId}/teacher/${teacherNum}/updateTime`] = new Date();
       users.update(updates);
 
-      if (alarmOff && Object.keys(schedulesWithStatus).length > 0) {
+      if (Object.keys(schedulesWithStatus).length > 0) {
         let msg = `<b>* TeacherNumber: ${teacherNum}</b>\n<b>New Schedule has been updated</b>\n\nhttps://engoo.co.kr/teachers/${teacherNum}`;
         Object.keys(schedulesWithStatus).reduce((prev, next) => {
           msg += `\n\n<b>* ${next}</b>\n`;
