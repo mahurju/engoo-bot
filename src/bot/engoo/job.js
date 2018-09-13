@@ -1,8 +1,9 @@
+/* eslint-disable no-param-reassign */
 const nconf = require('nconf');
 const axios = require('axios');
 const schedule = require('node-schedule');
 const stringify = require('json-stable-stringify');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const users = require('../../db')();
 
 const { api } = nconf.get('engoo');
@@ -14,7 +15,7 @@ const getTeacher = async (teacherNum) => {
   
   const { schedules } = res.data;
   console.log(`${api}${teacherNum}.json`);
-  console.log(JSON.stringify(res.data, null, 2));
+  // console.log(JSON.stringify(res.data, null, 2));
   // console.log('test', JSON.stringify(teacher, null, 2), JSON.stringify(schedules, null, 2));
   // const { teacher_name: name, image, youtube } = teacher || {};
 
@@ -36,37 +37,73 @@ const getTeacher = async (teacherNum) => {
     prev[lessenDate][startTime] = status === 0 ? '예약 가능' : '예약됨';
     return prev;
   }, {});
-
-
-  // console.log({ name, image: (image || []).split('/').filter(data => data !== 'image').join('/'), youtube, schedules: result });
-
   return { schedules: result, schedulesWithStatus: resultWithStatus };
 };
 
+const checkAlarmOff = async (chatId) => {
+  const result = await users.child(`/engoo/${chatId}/alarmOffTime`).once('value');
+  const alarmOffTime = result.val();
+  console.log('alarmOffTime', alarmOffTime);
+  if (!alarmOffTime) {
+    console.log('now is alarm on time.');
+    return true;
+  }
+
+  const [start, end] = alarmOffTime.split('-');
+
+  const timeRange = Array.from(Array(24).keys());
+  const startT = parseInt(start, 10);
+  const endT = parseInt(end, 10);
+
+  let setRange = [];
+  if (startT > endT) {
+    setRange = [...timeRange.slice(startT), ...timeRange.slice(0, endT)];
+  } else {
+    setRange = timeRange.slice(startT, endT);
+  }
+
+  const now = moment().tz('Asia/Seoul');
+  const nowT = parseInt(now.format('HH'), 10);
+
+  if (setRange.indexOf(nowT) > -1) {
+    console.log('now is alarm off time.');
+    return false;
+  }
+
+  console.log('now is alarm on time.');
+  return true;
+};
+
 const getSchedules = async (chatId) => {
+  const res = await checkAlarmOff(chatId);
+  if (!res) return;
+
   const result = await users.child(`/engoo/${chatId}/teacher`).once('value');
-  console.log(result.val());
+  // console.log(result.val());
   const teachers = result.val();
-  if (!teachers) return bot.telegram.sendMessage(chatId, 'Not find teacher.');
-  
+  if (!teachers) {
+    bot.telegram.sendMessage(chatId, 'Not found teacher.');
+    return;
+  }
+
   await Promise.all(Object.keys(teachers).map(async (teacherNum) => {
-    console.log(`TeacherNumber: ${teacherNum} ====================`);
+    // console.log(`TeacherNumber: ${teacherNum} ====================`);
     const { schedules, schedulesWithStatus } = await getTeacher(teacherNum);
-    console.log('remote', schedules);
+    // console.log('remote', schedules);
     const preSchedules = teachers[teacherNum].schedules || {};
-    console.log('before', preSchedules);
+    // console.log('before', preSchedules);
     if (Object.keys(preSchedules).length > 0) {
       Object.keys(preSchedules).map((date) => {
         const scheduleDate = moment(date);
         const today = moment().startOf('day');
 
         if (scheduleDate.isBefore(today)) {
-          console.log('delete date....', date);
+          // console.log('delete date....', date);
           delete preSchedules[date];
         }
       });
     }
-    console.log('after', preSchedules);
+    // console.log('after', preSchedules);
 
     if (stringify(preSchedules) !== stringify(schedules)) {
       const updates = {};
@@ -156,6 +193,35 @@ exports.remove = async (chatId, teacherNum, reply) => {
     return reply(`${teacherNum} removed.`);
   }
   return reply('Not found teacher.');
+};
+
+exports.setAlarmOff = async (chatId, timeRange = '', reply) => {
+  const pattern = /^\d{2}-\d{2}$/;
+  if (timeRange !== 'none' && !pattern.test(timeRange)) {
+    return reply('invalid time range\n(ex. 23-06)');
+  }
+
+  const [start, end] = timeRange.split('-');
+  const startT = parseInt(start, 10);
+  const endT = parseInt(end, 10);
+
+  if (startT === endT) {
+    return reply('invalid time range\n(ex. 23-06)');
+  }
+
+  if (startT < 0 || startT > 23) {
+    return reply('invalid time range\n(ex. 23-06)');
+  }
+
+  if (endT < 0 || endT > 23) {
+    return reply('invalid time range\n(ex. 23-06)');
+  }
+
+  const updates = {};
+  updates[`/engoo/${chatId}/alarmOffTime`] = timeRange === 'none' ? null : timeRange;
+  users.update(updates);
+  reply(`Set alarm off time: ${start}:00 ~ ${end}:00.`);
+  return false;
 };
 
 exports.startListen = async (chatId, send = true) => {

@@ -1,6 +1,6 @@
 const Telegraf = require('telegraf');
 const nconf = require('nconf');
-const { add, get, remove, startListen, stopListen, initListen, schedule } = require('./engoo');
+const { add, get, remove, startListen, stopListen, initListen, schedule, setAlarmOff } = require('./engoo');
 
 const { token } = nconf.get('telegram');
 const bot = new Telegraf(token);
@@ -14,12 +14,13 @@ const run = async () => {
     return entities.some(e => e.type === 'bot_command');
   };
 
-  const helpMsg = ['/addteacher [Add Teacher]',
-    '/getteacher [Show Teacher List]',
-    '/removeteacher [Remove Teacher]',
-    '/startlisten [Start Teacher schedule change notification]',
-    '/stoplisten [Stop Teacher schedule change notification]',
-    '/schedule [Show Teacher Schedules]'];
+  const helpMsg = ['/addteacher Add Teacher',
+    '/getteacher Show Teacher List',
+    '/removeteacher Remove Teacher',
+    '/startlisten Start Teacher schedule change notification',
+    '/stoplisten Stop Teacher schedule change notification',
+    '/schedule Show Teacher Schedules',
+    '/setalarmoff Set alarm off time range'];
 
   bot.help(ctx => ctx.reply(helpMsg.join('\n')));
   bot.start(ctx => ctx.reply(helpMsg.join('\n')));
@@ -35,6 +36,8 @@ const run = async () => {
   });
 
   bot.command('removeteacher', ({ reply }) => reply('/removeteacher Reply teacher number to remove.', { reply_markup: { force_reply: true, selective: true } }));
+
+  bot.command('setalarmoff', ({ reply }) => reply('/setalarmoff Reply alarm off time range.\n(ex. 23-06)\nIf you want to get alarm all the time, reply none.', { reply_markup: { force_reply: true, selective: true } }));
 
   bot.command('startlisten', async ({ from: { id: resChatId } }) => {
     await startListen(resChatId);
@@ -66,6 +69,15 @@ const run = async () => {
           try {
             const teacherNum = message.text;
             await remove(resChatId, teacherNum, reply);
+          } catch (err) {
+            reply(`Error Occured: ${JSON.stringify(err)}`);
+          }
+        }
+
+        if (text.startsWith('/setalarmoff')) {
+          try {
+            const timeRange = message.text;
+            await setAlarmOff(resChatId, timeRange, reply);
           } catch (err) {
             reply(`Error Occured: ${JSON.stringify(err)}`);
           }
