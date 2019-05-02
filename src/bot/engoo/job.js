@@ -1,3 +1,4 @@
+/* eslint-disable arrow-parens */
 /* eslint-disable no-param-reassign */
 const nconf = require('nconf');
 const axios = require('axios');
@@ -10,20 +11,24 @@ const { api } = nconf.get('engoo');
 let bot = null;
 const jobs = {};
 
-const getTeacher = async (teacherNum) => {
+const getTeacher = async teacherNum => {
   const res = await axios.get(`${api}${teacherNum}.json`);
-  
+
   const { schedules } = res.data;
   console.log(`${api}${teacherNum}.json`);
   // console.log(JSON.stringify(res.data, null, 2));
   // console.log('test', JSON.stringify(teacher, null, 2), JSON.stringify(schedules, null, 2));
   // const { teacher_name: name, image, youtube } = teacher || {};
 
-  const schedulesMap = schedules.result.map((data) => {
-    const { lesson_date: lessenDate, scheduled_start_time: startTime, status } = data;
+  const schedulesMap = schedules.result.map(data => {
+    const {
+      lesson_date: lessenDate,
+      scheduled_start_time: startTime,
+      status,
+    } = data;
     return { lessenDate, startTime: startTime.substring(0, 5), status };
   });
-  
+
   const result = schedulesMap.reduce((prev, next) => {
     const { lessenDate, startTime } = next;
     if (!prev[lessenDate]) prev[lessenDate] = [];
@@ -34,14 +39,16 @@ const getTeacher = async (teacherNum) => {
   const resultWithStatus = schedulesMap.reduce((prev, next) => {
     const { lessenDate, startTime, status } = next;
     if (!prev[lessenDate]) prev[lessenDate] = {};
-    prev[lessenDate][startTime] = status === 0 ? '예약 가능' : '예약됨';
+    prev[lessenDate][startTime] = status === 0 ? 'Not booked' : 'Booked';
     return prev;
   }, {});
   return { schedules: result, schedulesWithStatus: resultWithStatus };
 };
 
-const checkAlarmOff = async (chatId) => {
-  const result = await users.child(`/engoo/${chatId}/alarmOffTime`).once('value');
+const checkAlarmOff = async chatId => {
+  const result = await users
+    .child(`/engoo/${chatId}/alarmOffTime`)
+    .once('value');
   const alarmOffTime = result.val();
   console.log('alarmOffTime', alarmOffTime);
   if (!alarmOffTime) {
@@ -74,7 +81,7 @@ const checkAlarmOff = async (chatId) => {
   return true;
 };
 
-const getSchedules = async (chatId) => {
+const getSchedules = async chatId => {
   const res = await checkAlarmOff(chatId);
   if (!res) return;
 
@@ -86,46 +93,50 @@ const getSchedules = async (chatId) => {
     return;
   }
 
-  await Promise.all(Object.keys(teachers).map(async (teacherNum) => {
-    // console.log(`TeacherNumber: ${teacherNum} ====================`);
-    const { schedules, schedulesWithStatus } = await getTeacher(teacherNum);
-    // console.log('remote', schedules);
-    const preSchedules = teachers[teacherNum].schedules || {};
-    // console.log('before', preSchedules);
-    if (Object.keys(preSchedules).length > 0) {
-      Object.keys(preSchedules).map((date) => {
-        const scheduleDate = moment(date);
-        const today = moment().startOf('day');
+  await Promise.all(
+    Object.keys(teachers).map(async teacherNum => {
+      // console.log(`TeacherNumber: ${teacherNum} ====================`);
+      const { schedules, schedulesWithStatus } = await getTeacher(teacherNum);
+      // console.log('remote', schedules);
+      const preSchedules = teachers[teacherNum].schedules || {};
+      // console.log('before', preSchedules);
+      if (Object.keys(preSchedules).length > 0) {
+        Object.keys(preSchedules).map(date => {
+          const scheduleDate = moment(date);
+          const today = moment().startOf('day');
 
-        if (scheduleDate.isBefore(today)) {
-          // console.log('delete date....', date);
-          delete preSchedules[date];
-        }
-      });
-    }
-    // console.log('after', preSchedules);
+          if (scheduleDate.isBefore(today)) {
+            // console.log('delete date....', date);
+            delete preSchedules[date];
+          }
+        });
+      }
+      // console.log('after', preSchedules);
 
-    if (stringify(preSchedules) !== stringify(schedules)) {
-      const updates = {};
-      updates[`/engoo/${chatId}/teacher/${teacherNum}/schedules`] = schedules;
-      updates[`/engoo/${chatId}/teacher/${teacherNum}/updateTime`] = new Date();
-      users.update(updates);
+      if (stringify(preSchedules) !== stringify(schedules)) {
+        const updates = {};
+        updates[`/engoo/${chatId}/teacher/${teacherNum}/schedules`] = schedules;
+        updates[
+          `/engoo/${chatId}/teacher/${teacherNum}/updateTime`
+        ] = new Date();
+        users.update(updates);
 
-      if (Object.keys(schedulesWithStatus).length > 0) {
-        let msg = `<b>* TeacherNumber: ${teacherNum}</b>\n<b>New Schedule has been updated</b>\n\nhttps://engoo.co.kr/teachers/${teacherNum}`;
-        Object.keys(schedulesWithStatus).reduce((prev, next) => {
-          msg += `\n\n<b>* ${next}</b>\n`;
-          const date = next;
-          Object.keys(schedulesWithStatus[date]).reduce((prev2, next2) => {
-            msg += `- ${next2}: ${schedulesWithStatus[date][next2]}\n`;
+        if (Object.keys(schedulesWithStatus).length > 0) {
+          let msg = `<b>* TeacherNumber: ${teacherNum}</b>\n<b>New Schedule has been updated</b>\n\nhttps://engoo.co.kr/teachers/${teacherNum}`;
+          Object.keys(schedulesWithStatus).reduce((prev, next) => {
+            msg += `\n\n<b>* ${next}</b>\n`;
+            const date = next;
+            Object.keys(schedulesWithStatus[date]).reduce((prev2, next2) => {
+              msg += `- ${next2}: ${schedulesWithStatus[date][next2]}\n`;
+              return msg;
+            }, msg);
             return msg;
           }, msg);
-          return msg;
-        }, msg);
-        bot.telegram.sendMessage(chatId, msg, { parse_mode: 'HTML' });
+          bot.telegram.sendMessage(chatId, msg, { parse_mode: 'HTML' });
+        }
       }
-    }
-  }));
+    }),
+  );
 };
 
 exports.add = async (chatId, teacherNum, reply) => {
@@ -169,7 +180,7 @@ exports.get = async (reply, chatId) => {
   if (Object.keys(teacher).length === 0) {
     return reply('No added teacher.');
   }
-  
+
   let msg = '<b>[Teacher List]</b>\n\n';
   msg = Object.keys(teacher).reduce((prev, next) => {
     msg += `- ${next}\n`;
@@ -177,7 +188,6 @@ exports.get = async (reply, chatId) => {
   }, msg);
   return reply(msg, { parse_mode: 'HTML' });
 };
-
 
 exports.remove = async (chatId, teacherNum, reply) => {
   const data = await users.child(`/engoo/${chatId}/teacher`).once('value');
@@ -218,7 +228,8 @@ exports.setAlarmOff = async (chatId, timeRange = '', reply) => {
   }
 
   const updates = {};
-  updates[`/engoo/${chatId}/alarmOffTime`] = timeRange === 'none' ? null : timeRange;
+  updates[`/engoo/${chatId}/alarmOffTime`] =
+    timeRange === 'none' ? null : timeRange;
   users.update(updates);
 
   if (timeRange === 'none') {
@@ -226,19 +237,24 @@ exports.setAlarmOff = async (chatId, timeRange = '', reply) => {
   } else {
     reply(`Set alarm off time: ${start}:00 ~ ${end}:00.`);
   }
-  
+
   return false;
 };
 
 exports.startListen = async (chatId, send = true) => {
   const data = await users.child(`/engoo/${chatId}/teacher`).once('value');
   const address = data.val() || [];
-  if (address.length === 0) return bot.telegram.sendMessage(chatId, 'Not found teacher to start.');
+  if (address.length === 0)
+    return bot.telegram.sendMessage(chatId, 'Not found teacher to start.');
 
   if (jobs[chatId]) {
     const job = jobs[chatId];
     if (job && job.nextInvocation()) {
-      if (send) return bot.telegram.sendMessage(chatId, 'Your teachers are already listening now..');
+      if (send)
+        return bot.telegram.sendMessage(
+          chatId,
+          'Your teachers are already listening now..',
+        );
       return false;
     }
   }
@@ -250,7 +266,11 @@ exports.startListen = async (chatId, send = true) => {
   const updates = {};
   updates[`/engoo/${chatId}/listenChange`] = true;
   users.update(updates);
-  if (send) return bot.telegram.sendMessage(chatId, 'Your teachers are to start listen.');
+  if (send)
+    return bot.telegram.sendMessage(
+      chatId,
+      'Your teachers are to start listen.',
+    );
   return false;
 };
 
@@ -271,8 +291,7 @@ exports.stopListen = (reply, chatId) => {
   return reply('Your teachers are to stop listen.');
 };
 
-
-exports.initListen = async (myBot) => {
+exports.initListen = async myBot => {
   bot = myBot;
   const data = await users.child('/engoo').once('value');
   const allUsers = data.val();
@@ -290,30 +309,36 @@ exports.schedule = async (reply, chatId) => {
   console.log(result.val());
   const teachers = result.val();
   if (!teachers) return bot.telegram.sendMessage(chatId, 'Not find teacher.');
-  
-  await Promise.all(Object.keys(teachers).map(async (teacherNum) => {
-    console.log(`TeacherNumber: ${teacherNum} ====================`);
-    const { schedules, schedulesWithStatus } = await getTeacher(teacherNum);
 
-    const updates = {};
-    updates[`/engoo/${chatId}/teacher/${teacherNum}/schedules`] = schedules;
-    updates[`/engoo/${chatId}/teacher/${teacherNum}/updateTime`] = new Date();
-    users.update(updates);
+  await Promise.all(
+    Object.keys(teachers).map(async teacherNum => {
+      console.log(`TeacherNumber: ${teacherNum} ====================`);
+      const { schedules, schedulesWithStatus } = await getTeacher(teacherNum);
 
-    let msg = `<b>* TeacherNumber: ${teacherNum}</b>\nhttps://engoo.co.kr/teachers/${teacherNum}`;
-    if (Object.keys(schedulesWithStatus).length > 0) {
-      Object.keys(schedulesWithStatus).reduce((prev, next) => {
-        msg += `\n\n<b>* ${next}</b>\n`;
-        const date = next;
-        Object.keys(schedulesWithStatus[date]).reduce((prev2, next2) => {
-          msg += `- ${next2}: ${schedulesWithStatus[date][next2]}\n`;
+      const updates = {};
+      updates[`/engoo/${chatId}/teacher/${teacherNum}/schedules`] = schedules;
+      updates[`/engoo/${chatId}/teacher/${teacherNum}/updateTime`] = new Date();
+      users.update(updates);
+
+      let msg = `<b>* TeacherNumber: ${teacherNum}</b>\nhttps://engoo.co.kr/teachers/${teacherNum}`;
+      if (Object.keys(schedulesWithStatus).length > 0) {
+        Object.keys(schedulesWithStatus).reduce((prev, next) => {
+          msg += `\n\n<b>* ${next}</b>\n`;
+          const date = next;
+          Object.keys(schedulesWithStatus[date]).reduce((prev2, next2) => {
+            msg += `- ${next2}: ${schedulesWithStatus[date][next2]}\n`;
+            return msg;
+          }, msg);
           return msg;
         }, msg);
-        return msg;
-      }, msg);
-      bot.telegram.sendMessage(chatId, msg, { parse_mode: 'HTML' });
-    } else {
-      bot.telegram.sendMessage(chatId, msg += '\n\nSchdules are not found.', { parse_mode: 'HTML' });
-    }
-  }));
+        bot.telegram.sendMessage(chatId, msg, { parse_mode: 'HTML' });
+      } else {
+        bot.telegram.sendMessage(
+          chatId,
+          (msg += '\n\nSchdules are not found.'),
+          { parse_mode: 'HTML' },
+        );
+      }
+    }),
+  );
 };
