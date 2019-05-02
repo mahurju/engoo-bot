@@ -47,7 +47,7 @@ const getTeacher = async teacherNum => {
 
 const checkAlarmOff = async chatId => {
   const result = await users
-    .child(`/engoo/${chatId}/alarmOffTime`)
+    .child(`/engoo-teacher/${chatId}/alarmOffTime`)
     .once('value');
   const alarmOffTime = result.val();
   console.log('alarmOffTime', alarmOffTime);
@@ -85,7 +85,9 @@ const getSchedules = async chatId => {
   const res = await checkAlarmOff(chatId);
   if (!res) return;
 
-  const result = await users.child(`/engoo/${chatId}/teacher`).once('value');
+  const result = await users
+    .child(`/engoo-teacher/${chatId}/teacher`)
+    .once('value');
   // console.log(result.val());
   const teachers = result.val();
   if (!teachers) {
@@ -113,11 +115,13 @@ const getSchedules = async chatId => {
       }
       // console.log('after', preSchedules);
 
-      if (stringify(preSchedules) !== stringify(schedules)) {
+      if (stringify(preSchedules) !== stringify(schedulesWithStatus)) {
         const updates = {};
-        updates[`/engoo/${chatId}/teacher/${teacherNum}/schedules`] = schedules;
         updates[
-          `/engoo/${chatId}/teacher/${teacherNum}/updateTime`
+          `/engoo-teacher/${chatId}/teacher/${teacherNum}/schedules`
+        ] = schedulesWithStatus;
+        updates[
+          `/engoo-teacher/${chatId}/teacher/${teacherNum}/updateTime`
         ] = new Date();
         users.update(updates);
 
@@ -127,7 +131,21 @@ const getSchedules = async chatId => {
             msg += `\n\n<b>* ${next}</b>\n`;
             const date = next;
             Object.keys(schedulesWithStatus[date]).reduce((prev2, next2) => {
-              msg += `- ${next2}: ${schedulesWithStatus[date][next2]}\n`;
+              const preStatus =
+                preSchedules && preSchedules[date] && preSchedules[date][next2];
+
+              const nextStatus =
+                schedulesWithStatus &&
+                schedulesWithStatus[date] &&
+                schedulesWithStatus[date][next2];
+
+              if (preStatus !== nextStatus) {
+                msg += `<b>- ${next2}: ${
+                  schedulesWithStatus[date][next2]
+                }</b>\n`;
+              } else {
+                msg += `- ${next2}: ${schedulesWithStatus[date][next2]}\n`;
+              }
               return msg;
             }, msg);
             return msg;
@@ -140,7 +158,9 @@ const getSchedules = async chatId => {
 };
 
 exports.add = async (chatId, teacherNum, reply) => {
-  const data = await users.child(`/engoo/${chatId}/teacher`).once('value');
+  const data = await users
+    .child(`/engoo-teacher/${chatId}/teacher`)
+    .once('value');
   console.log(data.val());
   const updates = {};
   const teacher = data.val() || {};
@@ -153,7 +173,7 @@ exports.add = async (chatId, teacherNum, reply) => {
     schedules,
     createTime: new Date(),
   };
-  updates[`/engoo/${chatId}/teacher`] = teacher;
+  updates[`/engoo-teacher/${chatId}/teacher`] = teacher;
   users.update(updates);
 
   let msg = `<b>* TeacherNumber: ${teacherNum}</b>\nhttps://engoo.co.kr/teachers/${teacherNum}`;
@@ -174,7 +194,9 @@ exports.add = async (chatId, teacherNum, reply) => {
 };
 
 exports.get = async (reply, chatId) => {
-  const data = await users.child(`/engoo/${chatId}/teacher`).once('value');
+  const data = await users
+    .child(`/engoo-teacher/${chatId}/teacher`)
+    .once('value');
   console.log(data.val());
   const teacher = data.val() || {};
   if (Object.keys(teacher).length === 0) {
@@ -190,12 +212,14 @@ exports.get = async (reply, chatId) => {
 };
 
 exports.remove = async (chatId, teacherNum, reply) => {
-  const data = await users.child(`/engoo/${chatId}/teacher`).once('value');
+  const data = await users
+    .child(`/engoo-teacher/${chatId}/teacher`)
+    .once('value');
   console.log(data.val());
   const updates = {};
   const teacher = data.val() || {};
   if (teacher[teacherNum]) {
-    updates[`/engoo/${chatId}/teacher/${teacherNum}`] = null;
+    updates[`/engoo-teacher/${chatId}/teacher/${teacherNum}`] = null;
     users.update(updates);
     if (Object.keys(teacher).length === 1) {
       this.stopListen(reply, chatId);
@@ -228,7 +252,7 @@ exports.setAlarmOff = async (chatId, timeRange = '', reply) => {
   }
 
   const updates = {};
-  updates[`/engoo/${chatId}/alarmOffTime`] =
+  updates[`/engoo-teacher/${chatId}/alarmOffTime`] =
     timeRange === 'none' ? null : timeRange;
   users.update(updates);
 
@@ -242,7 +266,9 @@ exports.setAlarmOff = async (chatId, timeRange = '', reply) => {
 };
 
 exports.startListen = async (chatId, send = true) => {
-  const data = await users.child(`/engoo/${chatId}/teacher`).once('value');
+  const data = await users
+    .child(`/engoo-teacher/${chatId}/teacher`)
+    .once('value');
   const address = data.val() || [];
   if (address.length === 0)
     return bot.telegram.sendMessage(chatId, 'Not found teacher to start.');
@@ -259,12 +285,12 @@ exports.startListen = async (chatId, send = true) => {
     }
   }
 
-  jobs[chatId] = schedule.scheduleJob('*/20 * * * * *', async () => {
+  jobs[chatId] = schedule.scheduleJob('*/10 * * * * *', async () => {
     await getSchedules(chatId);
   });
 
   const updates = {};
-  updates[`/engoo/${chatId}/listenChange`] = true;
+  updates[`/engoo-teacher/${chatId}/listenChange`] = true;
   users.update(updates);
   if (send)
     return bot.telegram.sendMessage(
@@ -286,7 +312,7 @@ exports.stopListen = (reply, chatId) => {
   job.cancel();
   jobs[chatId] = null;
   const updates = {};
-  updates[`/engoo/${chatId}/listenChange`] = false;
+  updates[`/engoo-teacher/${chatId}/listenChange`] = false;
   users.update(updates);
   return reply('Your teachers are to stop listen.');
 };
@@ -305,7 +331,9 @@ exports.initListen = async myBot => {
 };
 
 exports.schedule = async (reply, chatId) => {
-  const result = await users.child(`/engoo/${chatId}/teacher`).once('value');
+  const result = await users
+    .child(`/engoo-teacher/${chatId}/teacher`)
+    .once('value');
   console.log(result.val());
   const teachers = result.val();
   if (!teachers) return bot.telegram.sendMessage(chatId, 'Not find teacher.');
@@ -316,8 +344,12 @@ exports.schedule = async (reply, chatId) => {
       const { schedules, schedulesWithStatus } = await getTeacher(teacherNum);
 
       const updates = {};
-      updates[`/engoo/${chatId}/teacher/${teacherNum}/schedules`] = schedules;
-      updates[`/engoo/${chatId}/teacher/${teacherNum}/updateTime`] = new Date();
+      updates[
+        `/engoo-teacher/${chatId}/teacher/${teacherNum}/schedules`
+      ] = schedulesWithStatus;
+      updates[
+        `/engoo-teacher/${chatId}/teacher/${teacherNum}/updateTime`
+      ] = new Date();
       users.update(updates);
 
       let msg = `<b>* TeacherNumber: ${teacherNum}</b>\nhttps://engoo.co.kr/teachers/${teacherNum}`;
