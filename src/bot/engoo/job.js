@@ -26,7 +26,21 @@ const getTeacher = async teacherNum => {
       scheduled_start_time: startTime,
       status,
     } = data;
-    return { lessenDate, startTime: startTime.substring(0, 5), status };
+
+    const seoulTz = moment.tz(`${lessenDate} ${startTime}`, 'Asia/Seoul');
+    // seoul to manila
+    seoulTz.tz('Asia/Manila');
+    console.log(seoulTz);
+
+    const changedTz = seoulTz.format('YYYY-MM-DD HH:mm');
+    const [newDate, newTime] = changedTz.split(' ');
+    console.log(newDate, newTime);
+
+    return {
+      lessenDate: newDate,
+      startTime: newTime.substring(0, 5),
+      status,
+    };
   });
 
   const result = schedulesMap.reduce((prev, next) => {
@@ -142,7 +156,7 @@ const getSchedules = async chatId => {
               if (preStatus !== nextStatus) {
                 msg += `<b>- ${next2}: ${
                   schedulesWithStatus[date][next2]
-                }</b>\n`;
+                } (Changed)</b>\n`;
               } else {
                 msg += `- ${next2}: ${schedulesWithStatus[date][next2]}\n`;
               }
