@@ -220,7 +220,13 @@ exports.setAlarmOff = async (chatId, timeRange = '', reply) => {
   const updates = {};
   updates[`/engoo/${chatId}/alarmOffTime`] = timeRange === 'none' ? null : timeRange;
   users.update(updates);
-  reply(`Set alarm off time: ${start}:00 ~ ${end}:00.`);
+
+  if (timeRange === 'none') {
+    reply('Set alarm ON all the time');
+  } else {
+    reply(`Set alarm off time: ${start}:00 ~ ${end}:00.`);
+  }
+  
   return false;
 };
 

@@ -1,5 +1,5 @@
 engoo:
-  api: https://engoo.co.kr/teachers/
+  api: https://engoo.co.kr/tutors/
   photo: https://image-eikaiwa.engoo.com
 
 firebase:
