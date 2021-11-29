@@ -59,6 +59,7 @@ const run = async () => {
         if (text.startsWith('/addteacher')) {
           try {
             const teacherNum = message.text;
+            console.log(resChatId, teacherNum, reply);
             await add(resChatId, teacherNum, reply);
           } catch (err) {
             reply(`Error Occured: ${JSON.stringify(err)}`);
